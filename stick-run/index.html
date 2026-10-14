@@ -1,0 +1,1214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Stick Run</title>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    background: #000;
+    overflow: hidden;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  canvas {
+    display: block;
+    width: 100vw;
+    height: 100vh;
+    background: #000;
+  }
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<script>
+"use strict";
+
+// ---------------------------------------------------------------------------
+// Levels
+//   #  solid block          ^  spike (floor)      v  spike (ceiling)
+//   P  player start         E  exit door          *  coin
+// Anything past the left/right edge counts as a wall; falling off the
+// bottom of the map kills you.
+// ---------------------------------------------------------------------------
+const LEVELS = [
+  {
+    name: "First Steps",
+    hint: "← →  or  A D  to run      SPACE / W / ↑  to jump",
+    map: [
+      "............................................",
+      "............................................",
+      "............................................",
+      "............................................",
+      "............................................",
+      "............................................",
+      "............................................",
+      "...............................*............",
+      ".....................*......................",
+      "...........*................................",
+      "...........................####..........E..",
+      "..P.............####...########..###########",
+      "##########..########...########..###########",
+      "##########..########...########..###########",
+    ],
+  },
+  {
+    name: "Mind the Spikes",
+    hint: "Hold jump to go higher. Tap it for a short hop under the ceiling spikes.",
+    map: [
+      "....................................................",
+      "....................................................",
+      "....................................................",
+      "........................................########....",
+      "........................................vvvvvvvv....",
+      "....................................................",
+      "...........................*.....*..................",
+      "....................................................",
+      "............*..............................#.....E..",
+      ".............................###...#################",
+      ".......................###...###...#################",
+      "..P........^^.....###..###...###^^^#################",
+      "#######..#######..###..###...#######################",
+      "#######..#######..###..###...#######################",
+    ],
+  },
+  {
+    name: "Wall Jump",
+    hint: "Jump into a wall, then press jump again to kick off it. Climb the shaft!",
+    map: [
+      "................................",
+      "................................",
+      "...................*............",
+      "......#.........................",
+      "......#......................E..",
+      "......#...########^^^###########",
+      "......#.*.######################",
+      "......#...##....................",
+      "......#...##....................",
+      "......#...##....................",
+      "......#...##....................",
+      "......#...##....................",
+      "......#.*.##....................",
+      "......#...##....................",
+      "......#...##....................",
+      "......#...##....................",
+      "......#...##....................",
+      "......#...##....................",
+      "......#...##....................",
+      "..........##....................",
+      "..........##....................",
+      "..P.......##....................",
+      "############....................",
+      "############....................",
+    ],
+  },
+  {
+    name: "Dash",
+    hint: "SHIFT / X / K to dash. One dash per jump, refills when you land.",
+    map: [
+      "....................................................",
+      "....................................................",
+      "....................................................",
+      "....................................................",
+      "....................................................",
+      "....................................................",
+      "....................................................",
+      "....................................................",
+      "....................#######.........................",
+      "............*........vvvvv........*.................",
+      "....................................................",
+      "..P....................*........................E...",
+      "#########......#######...######.......##############",
+      "#########......#######...######.......##############",
+    ],
+  },
+  {
+    name: "Gauntlet",
+    hint: "Everything you've learned. Good luck.",
+    map: [
+      "........................................................",
+      "........................................................",
+      "........................................................",
+      "............................................############",
+      "..................#............*..............vvvvvvv...",
+      "..................#.....................................",
+      "..................#...######......####..................",
+      "..................#...######......####....*.............",
+      "..................#...##.............................E..",
+      "..................#.*.##..............###...############",
+      "..................#...##..............###...############",
+      "..................#...##................................",
+      "..................#...##................................",
+      "..................#...##................................",
+      "..................#...##................................",
+      "..................#...##................................",
+      "..................#...##................................",
+      "..........*.......#...##................................",
+      "......................##................................",
+      "..P...................##................................",
+      "########^^^^############................................",
+      "########################................................",
+      "........................................................",
+      "........................................................",
+    ],
+  },
+];
+
+// ---------------------------------------------------------------------------
+// Tuning (units: pixels and frames at 60 fps)
+// ---------------------------------------------------------------------------
+const T = 32;               // tile size
+const GRAVITY = 0.55;
+const MAX_FALL = 13;
+const RUN_SPEED = 4.2;
+const GROUND_ACCEL = 0.9;
+const AIR_ACCEL = 0.55;
+const JUMP_VEL = -10.5;
+const JUMP_CUT = 0.45;      // vy multiplier when jump is released early
+const COYOTE = 6;           // frames you can still jump after walking off a ledge
+const JUMP_BUFFER = 8;      // frames a jump press is remembered before landing
+const WALL_SLIDE = 2.6;
+const WALL_JUMP_X = 6;
+const WALL_JUMP_Y = -9.8;
+const WALL_LOCK = 12;       // frames of reduced control after a wall jump
+const DASH_SPEED = 12;
+const DASH_TIME = 10;
+const DASH_COOLDOWN = 18;
+const RESPAWN_DELAY = 70;
+
+// ---------------------------------------------------------------------------
+// Canvas / screen
+// ---------------------------------------------------------------------------
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+let W = 0, H = 0, DPR = 1, zoom = 1;
+
+function resize() {
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
+  W = window.innerWidth;
+  H = window.innerHeight;
+  canvas.width = Math.floor(W * DPR);
+  canvas.height = Math.floor(H * DPR);
+  zoom = Math.max(0.6, Math.min(H / (15 * T), W / (13 * T)));
+}
+window.addEventListener("resize", resize);
+resize();
+
+// ---------------------------------------------------------------------------
+// Input
+// ---------------------------------------------------------------------------
+const keys = {};
+const pressed = {};
+const KEYMAP = {
+  ArrowLeft: "left", KeyA: "left",
+  ArrowRight: "right", KeyD: "right",
+  ArrowUp: "jump", KeyW: "jump", Space: "jump", KeyZ: "jump",
+  ShiftLeft: "dash", ShiftRight: "dash", KeyX: "dash", KeyK: "dash",
+  Enter: "start", KeyR: "restart", KeyP: "pause", Escape: "pause", KeyM: "mute",
+};
+
+window.addEventListener("keydown", (e) => {
+  const a = KEYMAP[e.code];
+  if (!a) return;
+  e.preventDefault();
+  initAudio();
+  if (!keys[a]) pressed[a] = true;
+  keys[a] = true;
+});
+window.addEventListener("keyup", (e) => {
+  const a = KEYMAP[e.code];
+  if (a) keys[a] = false;
+});
+window.addEventListener("blur", () => {
+  for (const k in keys) keys[k] = false;
+});
+
+// Touch controls: on-screen buttons, drawn on the canvas.
+let touchMode = false;
+const touchHeld = { left: false, right: false, jump: false, dash: false };
+
+function touchButtons() {
+  const r = Math.max(30, Math.min(W, H) * 0.075);
+  const pad = r * 0.6;
+  const by = H - pad - r;
+  return [
+    { id: "left", x: pad + r, y: by, r, label: "◀" },
+    { id: "right", x: pad + r * 3.4, y: by, r, label: "▶" },
+    { id: "jump", x: W - pad - r * 1.1, y: by, r: r * 1.1, label: "JUMP" },
+    { id: "dash", x: W - pad - r * 3.6, y: by + r * 0.15, r: r * 0.9, label: "DASH" },
+  ];
+}
+
+function handleTouches(e) {
+  e.preventDefault();
+  touchMode = true;
+  initAudio();
+  const now = { left: false, right: false, jump: false, dash: false };
+  const btns = touchButtons();
+  for (const t of e.touches) {
+    for (const b of btns) {
+      const dx = t.clientX - b.x, dy = t.clientY - b.y;
+      if (dx * dx + dy * dy < (b.r * 1.35) ** 2) now[b.id] = true;
+    }
+  }
+  for (const id in now) {
+    if (now[id] && !touchHeld[id]) pressed[id] = true;
+    touchHeld[id] = now[id];
+    keys[id] = now[id] || false;
+  }
+  if (e.type === "touchstart" && state !== "play") pressed.start = true;
+}
+canvas.addEventListener("touchstart", handleTouches, { passive: false });
+canvas.addEventListener("touchmove", handleTouches, { passive: false });
+canvas.addEventListener("touchend", handleTouches, { passive: false });
+canvas.addEventListener("touchcancel", handleTouches, { passive: false });
+canvas.addEventListener("mousedown", () => {
+  initAudio();
+  if (state !== "play") pressed.start = true;
+});
+
+// ---------------------------------------------------------------------------
+// Sound (tiny synth, no assets)
+// ---------------------------------------------------------------------------
+let audio = null;
+let muted = false;
+function initAudio() {
+  if (audio) return;
+  try {
+    audio = new (window.AudioContext || window.webkitAudioContext)();
+  } catch (_) {
+    audio = null;
+  }
+}
+function sfx(freq, dur, type = "square", slide = 0, vol = 0.08) {
+  if (!audio || muted) return;
+  const t0 = audio.currentTime;
+  const o = audio.createOscillator();
+  const g = audio.createGain();
+  o.type = type;
+  o.frequency.setValueAtTime(freq, t0);
+  if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(30, freq + slide), t0 + dur);
+  g.gain.setValueAtTime(vol, t0);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  o.connect(g).connect(audio.destination);
+  o.start(t0);
+  o.stop(t0 + dur);
+}
+const SFX = {
+  jump: () => sfx(380, 0.12, "square", 300, 0.05),
+  wall: () => sfx(300, 0.14, "square", 400, 0.05),
+  dash: () => sfx(900, 0.16, "sawtooth", -700, 0.04),
+  land: () => sfx(120, 0.06, "triangle", -40, 0.08),
+  coin: () => { sfx(988, 0.07, "square", 0, 0.04); setTimeout(() => sfx(1319, 0.12, "square", 0, 0.04), 60); },
+  die: () => sfx(220, 0.45, "sawtooth", -190, 0.07),
+  exit: () => { sfx(523, 0.1, "triangle", 0, 0.08); setTimeout(() => sfx(659, 0.1, "triangle", 0, 0.08), 90); setTimeout(() => sfx(784, 0.2, "triangle", 0, 0.08), 180); },
+};
+
+// ---------------------------------------------------------------------------
+// Level loading / tile queries
+// ---------------------------------------------------------------------------
+let level = null;
+let levelIndex = 0;
+
+function loadLevel(i) {
+  levelIndex = i;
+  const src = LEVELS[i];
+  const w = Math.max(...src.map.map((r) => r.length));
+  const h = src.map.length;
+  const grid = [];
+  const coins = [];
+  let start = { x: 2 * T, y: 0 };
+  let exit = { x: 0, y: 0 };
+  for (let y = 0; y < h; y++) {
+    const row = [];
+    for (let x = 0; x < w; x++) {
+      let c = src.map[y][x] || ".";
+      if (c === "P") { start = { x: x * T + T / 2, y: (y + 1) * T }; c = "."; }
+      else if (c === "E") { exit = { x: x * T, y: y * T }; c = "."; }
+      else if (c === "*") { coins.push({ x: x * T + T / 2, y: y * T + T / 2, got: false }); c = "."; }
+      row.push(c);
+    }
+    grid.push(row);
+  }
+  level = { w, h, grid, coins, start, exit, name: src.name, hint: src.hint, time: 0 };
+  spawnPlayer();
+  camera.x = player.x - W / zoom / 2;
+  camera.y = player.y - H / zoom / 2;
+  clampCamera(camera);
+  ghosts.length = 0;
+  particles.length = 0;
+  debris.length = 0;
+}
+
+function tileAt(tx, ty) {
+  if (tx < 0 || tx >= level.w) return "#";
+  if (ty < 0 || ty >= level.h) return ".";
+  return level.grid[ty][tx];
+}
+const isSolid = (tx, ty) => tileAt(tx, ty) === "#";
+
+// ---------------------------------------------------------------------------
+// Player
+// ---------------------------------------------------------------------------
+const PW = 14, PH = 44;
+let player = null;
+
+function makePose() {
+  return { lean: 0, l: [[0.15, 0.05], [-0.15, -0.05]], a: [[0.2, 0.3], [-0.2, -0.1]] };
+}
+
+function spawnPlayer() {
+  player = {
+    x: level.start.x - PW / 2,
+    y: level.start.y - PH,
+    vx: 0, vy: 0,
+    face: 1,
+    onGround: false,
+    wall: 0,
+    lastWall: 0,
+    wallCoyote: 0,
+    coyote: 0,
+    jumpBuf: 0,
+    jumpHeld: false,
+    canDash: true,
+    dashT: 0,
+    dashDir: 1,
+    dashCD: 0,
+    wallLock: 0,
+    landT: 0,
+    alive: true,
+    deadT: 0,
+    phase: 0,
+    t: 0,
+    pose: makePose(),
+  };
+}
+
+function overlapsSolid(x, y, w, h) {
+  const x0 = Math.floor(x / T), x1 = Math.floor((x + w - 0.001) / T);
+  const y0 = Math.floor(y / T), y1 = Math.floor((y + h - 0.001) / T);
+  for (let ty = y0; ty <= y1; ty++)
+    for (let tx = x0; tx <= x1; tx++)
+      if (isSolid(tx, ty)) return { tx, ty };
+  return null;
+}
+
+function moveX(p, dx) {
+  p.x += dx;
+  const hit = overlapsSolid(p.x, p.y, PW, PH);
+  if (hit) {
+    if (dx > 0) p.x = hit.tx * T - PW;
+    else if (dx < 0) p.x = (hit.tx + 1) * T;
+    p.vx = 0;
+    // a second solid column can only exist if we moved more than a tile
+    const again = overlapsSolid(p.x, p.y, PW, PH);
+    if (again) p.x += dx > 0 ? -(p.x + PW - again.tx * T) : (again.tx + 1) * T - p.x;
+  }
+}
+
+function moveY(p, dy) {
+  p.y += dy;
+  const hit = overlapsSolid(p.x, p.y, PW, PH);
+  if (hit) {
+    if (dy > 0) {
+      p.y = hit.ty * T - PH;
+      return "floor";
+    } else if (dy < 0) {
+      p.y = (hit.ty + 1) * T;
+      return "ceiling";
+    }
+  }
+  return null;
+}
+
+function touchingWall(p, side) {
+  const x = side < 0 ? p.x - 1 : p.x + PW + 1;
+  const tx = Math.floor(x / T);
+  const y0 = Math.floor((p.y + 6) / T), y1 = Math.floor((p.y + PH - 6) / T);
+  for (let ty = y0; ty <= y1; ty++) if (isSolid(tx, ty)) return true;
+  return false;
+}
+
+function updatePlayer(p) {
+  p.t++;
+  const dir = (keys.right ? 1 : 0) - (keys.left ? 1 : 0);
+
+  if (pressed.jump) p.jumpBuf = JUMP_BUFFER;
+  else if (p.jumpBuf > 0) p.jumpBuf--;
+
+  if (p.dashCD > 0) p.dashCD--;
+  if (p.wallLock > 0) p.wallLock--;
+  if (p.landT > 0) p.landT--;
+
+  // Start a dash
+  if (pressed.dash && p.canDash && p.dashCD <= 0) {
+    p.dashT = DASH_TIME;
+    p.dashDir = dir || p.face;
+    p.face = p.dashDir;
+    p.canDash = false;
+    p.dashCD = DASH_COOLDOWN;
+    p.vy = 0;
+    p.wallLock = 0;
+    shake(3);
+    SFX.dash();
+    burst(p.x + PW / 2, p.y + PH / 2, 8, 3);
+  }
+
+  if (p.dashT > 0) {
+    p.dashT--;
+    p.vx = p.dashDir * DASH_SPEED;
+    p.vy = 0;
+    if (p.t % 2 === 0) ghosts.push({ x: p.x, y: p.y, face: p.face, pose: clonePose(p.pose), ground: p.onGround, life: 14 });
+    if (p.dashT === 0) p.vx = p.dashDir * RUN_SPEED * 1.2;
+  } else {
+    let accel = p.onGround ? GROUND_ACCEL : AIR_ACCEL;
+    if (p.wallLock > 0) accel *= 0.2;
+    const target = dir * RUN_SPEED;
+    const diff = target - p.vx;
+    p.vx += Math.max(-accel, Math.min(accel, diff));
+
+    p.vy += GRAVITY;
+    if (p.wall !== 0 && !p.onGround && p.vy > WALL_SLIDE) {
+      p.vy = WALL_SLIDE;
+      if (p.t % 4 === 0) dust(p.wall > 0 ? p.x + PW : p.x, p.y + 8, 1);
+    }
+    if (p.vy > MAX_FALL) p.vy = MAX_FALL;
+  }
+
+  // Jumping: ground (with coyote time) or wall
+  if (p.jumpBuf > 0) {
+    if (p.coyote > 0) {
+      p.vy = JUMP_VEL;
+      p.coyote = 0;
+      p.jumpBuf = 0;
+      p.jumpHeld = true;
+      p.dashT = 0;
+      SFX.jump();
+      dust(p.x + PW / 2, p.y + PH, 6);
+    } else if (p.wallCoyote > 0 && !p.onGround) {
+      p.vy = WALL_JUMP_Y;
+      p.vx = -p.lastWall * WALL_JUMP_X;
+      p.face = -p.lastWall;
+      p.wallLock = WALL_LOCK;
+      p.wallCoyote = 0;
+      p.jumpBuf = 0;
+      p.jumpHeld = true;
+      p.dashT = 0;
+      SFX.wall();
+      dust(p.lastWall > 0 ? p.x + PW : p.x, p.y + PH / 2, 6);
+    }
+  }
+  // Variable jump height
+  if (p.jumpHeld && !keys.jump && p.vy < 0) {
+    p.vy *= JUMP_CUT;
+    p.jumpHeld = false;
+  }
+  if (p.vy >= 0) p.jumpHeld = false;
+
+  // Move & collide
+  const wasGround = p.onGround;
+  const preVy = p.vy;
+  moveX(p, p.vx);
+  const hitY = moveY(p, p.vy);
+  p.onGround = hitY === "floor";
+  if (hitY) p.vy = 0;
+  if (p.onGround) {
+    p.coyote = COYOTE;
+    p.canDash = true;
+    if (!wasGround && preVy > 3) {
+      p.landT = Math.min(10, Math.floor(preVy));
+      SFX.land();
+      dust(p.x + PW / 2, p.y + PH, Math.min(10, Math.floor(preVy)));
+    }
+  } else if (p.coyote > 0) {
+    p.coyote--;
+  }
+
+  // Walls
+  p.wall = 0;
+  if (!p.onGround) {
+    if (touchingWall(p, -1) && (dir < 0 || p.vy > 0)) p.wall = -1;
+    else if (touchingWall(p, 1) && (dir > 0 || p.vy > 0)) p.wall = 1;
+  }
+  if (p.wall !== 0) {
+    p.lastWall = p.wall;
+    p.wallCoyote = 6;
+    p.canDash = true;
+  } else if (p.wallCoyote > 0) {
+    p.wallCoyote--;
+  }
+
+  // Facing
+  if (p.dashT > 0) p.face = p.dashDir;
+  else if (p.wall !== 0 && p.vy > 0) p.face = -p.wall;
+  else if (dir !== 0 && p.wallLock <= 0) p.face = dir;
+  else if (p.wallLock > 0 && Math.abs(p.vx) > 0.5) p.face = Math.sign(p.vx);
+
+  // Run cycle and pose
+  if (p.onGround) p.phase += Math.abs(p.vx) * 0.09;
+  const target = targetPose(p);
+  const k = p.dashT > 0 ? 0.6 : 0.3;
+  lerpPose(p.pose, target, k);
+
+  // Hazards, pickups, exit
+  checkInteractions(p);
+}
+
+function checkInteractions(p) {
+  const hx = p.x + 2, hy = p.y + 4, hw = PW - 4, hh = PH - 6;
+  const x0 = Math.floor(hx / T), x1 = Math.floor((hx + hw) / T);
+  const y0 = Math.floor(hy / T), y1 = Math.floor((hy + hh) / T);
+  for (let ty = y0; ty <= y1; ty++) {
+    for (let tx = x0; tx <= x1; tx++) {
+      const c = tileAt(tx, ty);
+      if (c !== "^" && c !== "v") continue;
+      const sx = tx * T + 5, sw = T - 10;
+      const sy = c === "^" ? ty * T + 14 : ty * T, sh = T - 14;
+      if (hx < sx + sw && hx + hw > sx && hy < sy + sh && hy + hh > sy) {
+        killPlayer();
+        return;
+      }
+    }
+  }
+  if (p.y > level.h * T + 64) {
+    killPlayer();
+    return;
+  }
+
+  const cx = p.x + PW / 2, cy = p.y + PH / 2;
+  for (const c of level.coins) {
+    if (c.got) continue;
+    if (Math.abs(c.x - cx) < 16 && Math.abs(c.y - cy) < 28) {
+      c.got = true;
+      stats.coins++;
+      SFX.coin();
+      burst(c.x, c.y, 10, 2.5);
+    }
+  }
+
+  const e = level.exit;
+  if (cx > e.x + 4 && cx < e.x + T - 4 && p.y + PH > e.y - T + 4 && p.y < e.y + T) {
+    SFX.exit();
+    nextLevel();
+  }
+}
+
+function killPlayer() {
+  const p = player;
+  if (!p.alive) return;
+  p.alive = false;
+  p.deadT = RESPAWN_DELAY;
+  stats.deaths++;
+  SFX.die();
+  shake(10);
+  flash = 0.5;
+  // Break the stick figure into its individual lines
+  const s = skeleton(p.x + PW / 2, p.y + PH, p.face, p.pose, p.onGround);
+  const segs = [[s.hip, s.neck]];
+  for (const [a, b, c] of s.legs) segs.push([a, b], [b, c]);
+  for (const [a, b, c] of s.arms) segs.push([a, b], [b, c]);
+  for (const [a, b] of segs) {
+    const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+    debris.push({
+      x: mx, y: my,
+      dx: (b.x - a.x) / 2, dy: (b.y - a.y) / 2,
+      vx: p.vx * 0.4 + (Math.random() - 0.5) * 7,
+      vy: -3 - Math.random() * 6,
+      rot: 0, vr: (Math.random() - 0.5) * 0.5,
+      head: false, life: 1,
+    });
+  }
+  debris.push({
+    x: s.head.x, y: s.head.y, dx: 0, dy: 0,
+    vx: p.vx * 0.4 + (Math.random() - 0.5) * 6, vy: -6 - Math.random() * 3,
+    rot: 0, vr: 0, head: true, life: 1,
+  });
+  burst(p.x + PW / 2, p.y + PH / 2, 24, 5);
+}
+
+// ---------------------------------------------------------------------------
+// Stick figure animation
+// Angles are measured from straight down; positive = towards facing.
+// l: legs [thigh, shin], a: arms [upper, fore]
+// ---------------------------------------------------------------------------
+function targetPose(p) {
+  if (p.dashT > 0)
+    return { lean: 0.8, l: [[0.8, -0.4], [-0.9, -1.2]], a: [[-1.3, -1.6], [-1.1, -1.4]] };
+
+  if (!p.onGround && p.wall !== 0 && p.vy > 0)
+    return { lean: -0.12, l: [[0.7, 0.05], [-0.45, -0.1]], a: [[1.2, 1.7], [-2.5, -2.8]] };
+
+  if (!p.onGround) {
+    if (p.vy < 0)
+      return { lean: 0.12, l: [[1.15, 0.1], [-0.25, -1.25]], a: [[2.4, 2.9], [-0.9, -0.4]] };
+    const flail = Math.sin(p.t * 0.35) * 0.25;
+    return { lean: 0.05, l: [[0.5 + flail, 0.0], [-0.35 - flail, -0.9]], a: [[1.9 + flail, 2.4], [-1.9 + flail, -1.4]] };
+  }
+
+  if (p.landT > 0) {
+    const c = p.landT / 10;
+    return { lean: 0.3 * c, l: [[0.6 + 0.6 * c, -0.4 - 0.4 * c], [0.3 + 0.5 * c, -0.6 - 0.4 * c]], a: [[0.5, 1.2], [-0.5, 0.1]] };
+  }
+
+  const sp = Math.abs(p.vx);
+  if (sp > 0.4) {
+    const amt = Math.min(1, sp / RUN_SPEED);
+    const pose = { lean: 0.22 * amt, l: [], a: [] };
+    for (let i = 0; i < 2; i++) {
+      const ph = p.phase + i * Math.PI;
+      const s = Math.sin(ph);
+      const thigh = s * 0.85 * amt;
+      const bend = (0.15 + 1.4 * Math.max(0, Math.cos(ph))) * amt;
+      pose.l.push([thigh, thigh - bend]);
+      const upper = -s * 0.85 * amt;
+      pose.a.push([upper, upper + (0.7 + 0.5 * Math.max(0, -s)) * amt]);
+    }
+    return pose;
+  }
+
+  const b = Math.sin(p.t * 0.05);
+  return { lean: 0.03 * b, l: [[0.16, 0.08], [-0.16, -0.08]], a: [[0.22 + 0.04 * b, 0.35 + 0.05 * b], [-0.22 - 0.04 * b, -0.1 - 0.05 * b]] };
+}
+
+function lerpPose(p, t, k) {
+  p.lean += (t.lean - p.lean) * k;
+  for (let i = 0; i < 2; i++) {
+    for (let j = 0; j < 2; j++) {
+      p.l[i][j] += (t.l[i][j] - p.l[i][j]) * k;
+      p.a[i][j] += (t.a[i][j] - p.a[i][j]) * k;
+    }
+  }
+}
+
+function clonePose(p) {
+  return { lean: p.lean, l: p.l.map((x) => x.slice()), a: p.a.map((x) => x.slice()) };
+}
+
+const THIGH = 9, SHIN = 9, UPPER = 8, FORE = 8, TORSO = 13, HEAD_R = 6;
+
+function skeleton(cx, bottom, face, pose, grounded) {
+  let ext = 0;
+  for (const [a, b] of pose.l) ext = Math.max(ext, Math.cos(a) * THIGH + Math.cos(b) * SHIN);
+  const hip = { x: cx, y: bottom - (grounded ? ext : THIGH + SHIN - 1) };
+  const ux = Math.sin(pose.lean) * face, uy = -Math.cos(pose.lean);
+  const neck = { x: hip.x + ux * TORSO, y: hip.y + uy * TORSO };
+  const shoulder = { x: hip.x + ux * (TORSO - 2), y: hip.y + uy * (TORSO - 2) };
+  const head = { x: hip.x + ux * (TORSO + 2 + HEAD_R), y: hip.y + uy * (TORSO + 2 + HEAD_R) };
+  const seg = (o, ang, len) => ({ x: o.x + Math.sin(ang) * len * face, y: o.y + Math.cos(ang) * len });
+  const legs = pose.l.map(([a, b]) => {
+    const knee = seg(hip, a, THIGH);
+    return [hip, knee, seg(knee, b, SHIN)];
+  });
+  const arms = pose.a.map(([a, b]) => {
+    const elbow = seg(shoulder, a + pose.lean * 0.5, UPPER);
+    return [shoulder, elbow, seg(elbow, b + pose.lean * 0.5, FORE)];
+  });
+  return { hip, neck, head, legs, arms };
+}
+
+function drawStick(x, bottom, face, pose, grounded, alpha = 1) {
+  const s = skeleton(x, bottom, face, pose, grounded);
+  ctx.globalAlpha = alpha;
+  ctx.strokeStyle = "#fff";
+  ctx.fillStyle = "#fff";
+  ctx.lineWidth = 3;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  ctx.beginPath();
+  for (const limb of [...s.legs, ...s.arms]) {
+    ctx.moveTo(limb[0].x, limb[0].y);
+    ctx.lineTo(limb[1].x, limb[1].y);
+    ctx.lineTo(limb[2].x, limb[2].y);
+  }
+  ctx.moveTo(s.hip.x, s.hip.y);
+  ctx.lineTo(s.neck.x, s.neck.y);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(s.head.x, s.head.y, HEAD_R, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+}
+
+// ---------------------------------------------------------------------------
+// Effects
+// ---------------------------------------------------------------------------
+const particles = [];
+const ghosts = [];
+const debris = [];
+let shakeAmt = 0;
+let flash = 0;
+
+function shake(n) { shakeAmt = Math.max(shakeAmt, n); }
+
+function dust(x, y, n) {
+  for (let i = 0; i < n; i++) {
+    particles.push({
+      x, y,
+      vx: (Math.random() - 0.5) * 2.5,
+      vy: -Math.random() * 1.5,
+      life: 20 + Math.random() * 15,
+      max: 35,
+      size: 1.5 + Math.random() * 2,
+      g: 0.05,
+    });
+  }
+}
+
+function burst(x, y, n, speed) {
+  for (let i = 0; i < n; i++) {
+    const a = Math.random() * Math.PI * 2;
+    const v = speed * (0.4 + Math.random());
+    particles.push({
+      x, y,
+      vx: Math.cos(a) * v,
+      vy: Math.sin(a) * v,
+      life: 25 + Math.random() * 20,
+      max: 45,
+      size: 1.5 + Math.random() * 2.5,
+      g: 0.12,
+    });
+  }
+}
+
+function updateEffects() {
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const q = particles[i];
+    q.x += q.vx; q.y += q.vy; q.vy += q.g; q.vx *= 0.97;
+    if (--q.life <= 0) particles.splice(i, 1);
+  }
+  for (let i = ghosts.length - 1; i >= 0; i--) {
+    if (--ghosts[i].life <= 0) ghosts.splice(i, 1);
+  }
+  for (let i = debris.length - 1; i >= 0; i--) {
+    const d = debris[i];
+    d.vy += 0.45;
+    d.x += d.vx;
+    d.rot += d.vr;
+    const ny = d.y + d.vy;
+    if (d.vy > 0 && isSolid(Math.floor(d.x / T), Math.floor((ny + 3) / T))) {
+      d.vy *= -0.35;
+      d.vx *= 0.6;
+      d.vr *= 0.5;
+    } else {
+      d.y = ny;
+    }
+    if (isSolid(Math.floor(d.x / T), Math.floor(d.y / T))) d.vx *= -0.5;
+    if (player.deadT < 25) d.life = player.deadT / 25;
+  }
+  if (shakeAmt > 0) shakeAmt *= 0.85;
+  if (shakeAmt < 0.1) shakeAmt = 0;
+  if (flash > 0) flash = Math.max(0, flash - 0.04);
+}
+
+// ---------------------------------------------------------------------------
+// Camera
+// ---------------------------------------------------------------------------
+const camera = { x: 0, y: 0 };
+
+function clampCamera(c) {
+  const vw = W / zoom, vh = H / zoom;
+  const lw = level.w * T, lh = level.h * T;
+  c.x = lw <= vw ? (lw - vw) / 2 : Math.max(0, Math.min(lw - vw, c.x));
+  c.y = lh <= vh ? (lh - vh) / 2 : Math.max(0, Math.min(lh - vh, c.y));
+}
+
+function updateCamera() {
+  const vw = W / zoom, vh = H / zoom;
+  const lookAhead = player.alive ? player.face * 40 : 0;
+  const tx = player.x + PW / 2 + lookAhead - vw / 2;
+  const ty = player.y + PH / 2 - vh * 0.55;
+  const target = { x: tx, y: ty };
+  clampCamera(target);
+  camera.x += (target.x - camera.x) * 0.1;
+  camera.y += (target.y - camera.y) * 0.1;
+}
+
+// ---------------------------------------------------------------------------
+// Game state
+// ---------------------------------------------------------------------------
+let state = "title";   // title | play | paused | trans | win
+let transT = 0;
+let transTo = 0;
+let titleT = 0;
+const stats = { deaths: 0, coins: 0, time: 0 };
+const totalCoins = LEVELS.reduce((n, l) => n + l.map.join("").split("*").length - 1, 0);
+let titlePlayer = { t: 0, phase: 0, pose: makePose() };
+
+function startGame() {
+  stats.deaths = 0;
+  stats.coins = 0;
+  stats.time = 0;
+  beginTransition(0);
+}
+
+function beginTransition(to) {
+  state = "trans";
+  transT = 0;
+  transTo = to;
+}
+
+function nextLevel() {
+  if (levelIndex + 1 >= LEVELS.length) {
+    state = "win";
+    titleT = 0;
+  } else {
+    beginTransition(levelIndex + 1);
+  }
+}
+
+function step() {
+  if (pressed.mute) muted = !muted;
+
+  if (state === "title" || state === "win") {
+    titleT++;
+    titlePlayer.t++;
+    titlePlayer.phase += 0.38;
+    lerpPose(titlePlayer.pose, targetPose({ ...titlePlayer, dashT: 0, onGround: true, wall: 0, landT: 0, vx: RUN_SPEED, vy: 0 }), 0.3);
+    if (pressed.start || pressed.jump) startGame();
+  } else if (state === "trans") {
+    transT++;
+    if (transT === 30) loadLevel(transTo);
+    if (transT >= 100) state = "play";
+    if (transT > 30) updateEffects();
+  } else if (state === "paused") {
+    if (pressed.pause || pressed.start) state = "play";
+  } else if (state === "play") {
+    if (pressed.pause) {
+      state = "paused";
+    } else {
+      stats.time++;
+      level.time++;
+      if (pressed.restart && player.alive) killPlayer();
+      if (player.alive) {
+        updatePlayer(player);
+      } else if (--player.deadT <= 0) {
+        debris.length = 0;
+        spawnPlayer();
+        burst(player.x + PW / 2, player.y + PH / 2, 14, 2);
+      }
+      updateEffects();
+      updateCamera();
+    }
+  }
+  for (const k in pressed) pressed[k] = false;
+}
+
+// ---------------------------------------------------------------------------
+// Rendering
+// ---------------------------------------------------------------------------
+const stars = Array.from({ length: 90 }, () => ({
+  x: Math.random(), y: Math.random(), d: 0.1 + Math.random() * 0.35, s: Math.random() < 0.15 ? 1.5 : 1,
+}));
+
+function drawBackground(time) {
+  ctx.fillStyle = "#000";
+  ctx.fillRect(0, 0, W, H);
+  const cx = level ? camera.x : time * 0.6;
+  const cy = level ? camera.y : 0;
+  ctx.fillStyle = "#fff";
+  for (const s of stars) {
+    const x = ((s.x * W * 2 - cx * s.d * zoom) % W + W) % W;
+    const y = ((s.y * H * 2 - cy * s.d * zoom) % H + H) % H;
+    ctx.globalAlpha = 0.12 + s.d * 0.4;
+    ctx.fillRect(x, y, s.s, s.s);
+  }
+  ctx.globalAlpha = 1;
+}
+
+function drawLevel(time) {
+  const vw = W / zoom, vh = H / zoom;
+  const x0 = Math.max(0, Math.floor(camera.x / T) - 1), x1 = Math.min(level.w - 1, Math.ceil((camera.x + vw) / T) + 1);
+  const y0 = Math.max(0, Math.floor(camera.y / T) - 1), y1 = Math.min(level.h - 1, Math.ceil((camera.y + vh) / T) + 1);
+
+  // Block interiors: subtle hatching so solid ground reads as solid
+  ctx.fillStyle = "#0d0d0d";
+  for (let y = y0; y <= y1; y++)
+    for (let x = x0; x <= x1; x++)
+      if (level.grid[y][x] === "#") ctx.fillRect(x * T, y * T, T, y === level.h - 1 ? T * 20 : T);
+
+  ctx.strokeStyle = "rgba(255,255,255,0.07)";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  for (let y = y0; y <= y1; y++)
+    for (let x = x0; x <= x1; x++)
+      if (level.grid[y][x] === "#" && (x + y) % 2 === 0) {
+        ctx.moveTo(x * T + 8, y * T + T - 8);
+        ctx.lineTo(x * T + T - 8, y * T + 8);
+      }
+  ctx.stroke();
+
+  // White outlines only on exposed edges -> clean line-art shapes
+  ctx.strokeStyle = "#fff";
+  ctx.lineWidth = 2;
+  ctx.lineCap = "square";
+  ctx.beginPath();
+  for (let y = y0; y <= y1; y++) {
+    for (let x = x0; x <= x1; x++) {
+      if (level.grid[y][x] !== "#") continue;
+      const px = x * T, py = y * T;
+      if (!isSolid(x, y - 1) && y > 0) { ctx.moveTo(px, py); ctx.lineTo(px + T, py); }
+      if (!isSolid(x, y + 1) && y < level.h - 1) { ctx.moveTo(px, py + T); ctx.lineTo(px + T, py + T); }
+      // blocks on the bottom row continue down off-screen
+      const ph = y === level.h - 1 ? T * 20 : T;
+      if (!isSolid(x - 1, y)) { ctx.moveTo(px, py); ctx.lineTo(px, py + ph); }
+      if (!isSolid(x + 1, y)) { ctx.moveTo(px + T, py); ctx.lineTo(px + T, py + ph); }
+    }
+  }
+  ctx.stroke();
+
+  // Spikes
+  ctx.lineWidth = 2;
+  ctx.lineJoin = "miter";
+  ctx.fillStyle = "#000";
+  for (let y = y0; y <= y1; y++) {
+    for (let x = x0; x <= x1; x++) {
+      const c = level.grid[y][x];
+      if (c !== "^" && c !== "v") continue;
+      ctx.beginPath();
+      for (let i = 0; i < 2; i++) {
+        const bx = x * T + i * (T / 2);
+        if (c === "^") {
+          ctx.moveTo(bx + 1, y * T + T);
+          ctx.lineTo(bx + T / 4, y * T + 10);
+          ctx.lineTo(bx + T / 2 - 1, y * T + T);
+        } else {
+          ctx.moveTo(bx + 1, y * T);
+          ctx.lineTo(bx + T / 4, y * T + T - 10);
+          ctx.lineTo(bx + T / 2 - 1, y * T);
+        }
+      }
+      ctx.fill();
+      ctx.stroke();
+    }
+  }
+
+  // Exit door
+  const e = level.exit;
+  const pulse = 0.5 + 0.5 * Math.sin(time * 0.06);
+  ctx.save();
+  ctx.shadowColor = "#fff";
+  ctx.shadowBlur = 10 + pulse * 14;
+  ctx.strokeStyle = "#fff";
+  ctx.lineWidth = 2.5;
+  ctx.strokeRect(e.x + 5, e.y - T + 4, T - 10, T * 2 - 4);
+  ctx.restore();
+  ctx.fillStyle = `rgba(255,255,255,${0.06 + pulse * 0.1})`;
+  ctx.fillRect(e.x + 5, e.y - T + 4, T - 10, T * 2 - 4);
+  ctx.fillStyle = "#fff";
+  ctx.beginPath();
+  ctx.arc(e.x + T - 10, e.y + T / 2 - 2, 2, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Coins
+  for (const c of level.coins) {
+    if (c.got) continue;
+    const bob = Math.sin(time * 0.08 + c.x) * 3;
+    const sx = Math.abs(Math.cos(time * 0.05 + c.x * 0.1));
+    ctx.save();
+    ctx.translate(c.x, c.y + bob);
+    ctx.scale(0.25 + sx * 0.75, 1);
+    ctx.shadowColor = "#fff";
+    ctx.shadowBlur = 8;
+    ctx.fillStyle = "#fff";
+    ctx.beginPath();
+    ctx.moveTo(0, -8); ctx.lineTo(6, 0); ctx.lineTo(0, 8); ctx.lineTo(-6, 0);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+}
+
+function drawEntities() {
+  for (const g of ghosts) drawStick(g.x + PW / 2, g.y + PH, g.face, g.pose, g.ground, (g.life / 14) * 0.35);
+
+  const p = player;
+  if (p.alive) {
+    drawStick(p.x + PW / 2, p.y + PH, p.face, p.pose, p.onGround);
+    if (!p.canDash && p.dashT === 0) {
+      // tiny marker above head: dash spent
+      ctx.globalAlpha = 0.35;
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(p.x + PW / 2 - 4, p.y - 8, 8, 2);
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  ctx.strokeStyle = "#fff";
+  ctx.fillStyle = "#fff";
+  ctx.lineWidth = 3;
+  ctx.lineCap = "round";
+  for (const d of debris) {
+    ctx.globalAlpha = Math.max(0, d.life);
+    ctx.save();
+    ctx.translate(d.x, d.y);
+    ctx.rotate(d.rot);
+    ctx.beginPath();
+    if (d.head) ctx.arc(0, 0, HEAD_R, 0, Math.PI * 2), ctx.fill();
+    else ctx.moveTo(-d.dx, -d.dy), ctx.lineTo(d.dx, d.dy), ctx.stroke();
+    ctx.restore();
+  }
+  ctx.globalAlpha = 1;
+
+  for (const q of particles) {
+    ctx.globalAlpha = Math.max(0, q.life / q.max);
+    ctx.fillRect(q.x - q.size / 2, q.y - q.size / 2, q.size, q.size);
+  }
+  ctx.globalAlpha = 1;
+}
+
+function fmtTime(frames) {
+  const s = frames / 60;
+  const m = Math.floor(s / 60);
+  return `${m}:${(s % 60).toFixed(1).padStart(4, "0")}`;
+}
+
+function text(str, x, y, size, align = "center", alpha = 1, weight = "700") {
+  ctx.globalAlpha = alpha;
+  ctx.fillStyle = "#fff";
+  ctx.font = `${weight} ${size}px "Courier New", ui-monospace, monospace`;
+  ctx.textAlign = align;
+  ctx.textBaseline = "middle";
+  ctx.fillText(str, x, y);
+  ctx.globalAlpha = 1;
+}
+
+function drawHUD() {
+  const s = Math.max(12, Math.min(18, W / 50));
+  text(`${levelIndex + 1}/${LEVELS.length}  ${level.name.toUpperCase()}`, 16, 22, s, "left");
+  text(`☠ ${stats.deaths}   ◆ ${stats.coins}/${totalCoins}   ${fmtTime(stats.time)}`, W - 16, 22, s, "right");
+  const hintAlpha = Math.max(0.35, Math.min(1, 1 - (level.time - 300) / 120));
+  text(level.hint, W / 2, 52, Math.max(11, Math.min(16, W / 60)), "center", hintAlpha, "400");
+  if (muted) text("MUTED (M)", 16, 46, 11, "left", 0.5, "400");
+}
+
+function drawTouchControls() {
+  if (!touchMode) return;
+  for (const b of touchButtons()) {
+    ctx.globalAlpha = touchHeld[b.id] ? 0.35 : 0.15;
+    ctx.fillStyle = "#fff";
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 0.6;
+    ctx.strokeStyle = "#fff";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    text(b.label, b.x, b.y, b.label.length > 1 ? b.r * 0.38 : b.r * 0.7, "center", 0.85);
+  }
+  ctx.globalAlpha = 1;
+}
+
+function drawTitle(time, win) {
+  drawBackground(time);
+  const big = Math.max(34, Math.min(84, W / 9));
+  if (win) {
+    text("YOU ESCAPED", W / 2, H * 0.26, big);
+    const s = Math.max(14, Math.min(22, W / 36));
+    text(`Time  ${fmtTime(stats.time)}`, W / 2, H * 0.40, s, "center", 1, "400");
+    text(`Deaths  ${stats.deaths}`, W / 2, H * 0.40 + s * 1.6, s, "center", 1, "400");
+    text(`Coins  ${stats.coins} / ${totalCoins}`, W / 2, H * 0.40 + s * 3.2, s, "center", 1, "400");
+  } else {
+    text("STICK RUN", W / 2, H * 0.28, big);
+    text("a tiny platformer", W / 2, H * 0.28 + big * 0.75, Math.max(12, big * 0.25), "center", 0.6, "400");
+  }
+
+  // a stick figure running in place
+  ctx.save();
+  const sc = Math.max(1.5, Math.min(3, H / 260));
+  ctx.translate(W / 2, H * 0.68);
+  ctx.scale(sc, sc);
+  ctx.strokeStyle = "rgba(255,255,255,0.4)";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(-60, 0); ctx.lineTo(60, 0);
+  ctx.stroke();
+  drawStick(0, 0, 1, titlePlayer.pose, true);
+  ctx.restore();
+
+  const blink = 0.45 + 0.55 * Math.abs(Math.sin(time * 0.05));
+  const prompt = touchMode || ("ontouchstart" in window) ? "TAP TO " : "PRESS ENTER TO ";
+  text(prompt + (win ? "PLAY AGAIN" : "START"), W / 2, H * 0.86, Math.max(13, Math.min(22, W / 34)), "center", blink);
+  if (!win && !touchMode) {
+    text("Move: ← → / A D    Jump: Space / W / ↑    Dash: Shift / X    Restart: R    Pause: P    Mute: M",
+      W / 2, H * 0.93, Math.max(10, Math.min(14, W / 80)), "center", 0.5, "400");
+  }
+}
+
+let frameCount = 0;
+function render() {
+  frameCount++;
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+
+  if (state === "title" || state === "win") {
+    drawTitle(frameCount, state === "win");
+    return;
+  }
+  if (!level) {
+    drawBackground(frameCount);
+  } else {
+    drawBackground(frameCount);
+    const sx = (Math.random() - 0.5) * shakeAmt, sy = (Math.random() - 0.5) * shakeAmt;
+    ctx.save();
+    ctx.translate(sx, sy);
+    ctx.scale(zoom, zoom);
+    ctx.translate(-Math.round(camera.x * zoom) / zoom, -Math.round(camera.y * zoom) / zoom);
+    drawLevel(frameCount);
+    drawEntities();
+    ctx.restore();
+    if (flash > 0) {
+      ctx.fillStyle = `rgba(255,255,255,${flash * 0.35})`;
+      ctx.fillRect(0, 0, W, H);
+    }
+    drawHUD();
+    drawTouchControls();
+  }
+
+  if (state === "paused") {
+    ctx.fillStyle = "rgba(0,0,0,0.6)";
+    ctx.fillRect(0, 0, W, H);
+    text("PAUSED", W / 2, H / 2, Math.max(28, W / 16));
+    text("P to resume", W / 2, H / 2 + 44, 14, "center", 0.6, "400");
+  }
+
+  if (state === "trans") {
+    // fade out, title card, fade in
+    let a;
+    if (transT < 30) a = transT / 30;
+    else if (transT < 70) a = 1;
+    else a = 1 - (transT - 70) / 30;
+    ctx.fillStyle = `rgba(0,0,0,${a})`;
+    ctx.fillRect(0, 0, W, H);
+    if (transT >= 25) {
+      const ta = transT < 70 ? Math.min(1, (transT - 25) / 15) : a;
+      const L = LEVELS[transTo];
+      text(`LEVEL ${transTo + 1}`, W / 2, H / 2 - 24, Math.max(14, W / 50), "center", ta * 0.6, "400");
+      text(L.name.toUpperCase(), W / 2, H / 2 + 12, Math.max(26, Math.min(56, W / 14)), "center", ta);
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Main loop (fixed 60 Hz simulation, render every animation frame)
+// ---------------------------------------------------------------------------
+let last = performance.now();
+let acc = 0;
+const STEP = 1000 / 60;
+function frame(now) {
+  acc += Math.min(100, now - last);
+  last = now;
+  while (acc >= STEP) {
+    step();
+    acc -= STEP;
+  }
+  render();
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
