@@ -65,6 +65,51 @@
   }
   #hint b { color: #f2c14e; font-weight: 700; }
   @keyframes pulse { 50% { opacity: 0.7; } }
+  .ui { pointer-events: auto; }
+  #gear {
+    position: absolute; right: calc(var(--s) * 14px); bottom: calc(var(--s) * 12px);
+    width: calc(var(--s) * 44px); height: calc(var(--s) * 44px); border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.25); background: rgba(10,12,16,0.6); color: #fff;
+    -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+    font-size: calc(var(--s) * 22px); line-height: 1; cursor: pointer; z-index: 5;
+    display: flex; align-items: center; justify-content: center;
+  }
+  #settings {
+    position: absolute; inset: 0; z-index: 10; display: flex; align-items: flex-end; justify-content: center;
+    padding-bottom: calc(var(--s) * 10px);
+    background: linear-gradient(180deg, rgba(6,8,12,0) 40%, rgba(6,8,12,0.45));
+  }
+  #wrap.settings-open #overlay, #wrap.settings-open #hint { display: none !important; }
+  #settings.hidden { display: none; }
+  #settings .card {
+    width: min(96%, calc(var(--s) * 780px)); max-height: 60%; overflow-y: auto; -webkit-overflow-scrolling: touch;
+    background: linear-gradient(180deg, rgba(22,26,33,0.94), rgba(12,14,18,0.94));
+    border: 1px solid rgba(255,255,255,0.18); border-radius: calc(var(--s) * 14px);
+    padding: calc(var(--s) * 12px) calc(var(--s) * 18px); color: #fff;
+    display: grid; grid-template-columns: 1fr 1fr; column-gap: calc(var(--s) * 26px);
+    box-shadow: 0 calc(var(--s) * 12px) calc(var(--s) * 40px) rgba(0,0,0,0.5);
+    font-size: calc(var(--s) * 14px);
+  }
+  #settings h3 { font-size: calc(var(--s) * 13px); letter-spacing: calc(var(--s) * 3px); color: #f2c14e; font-weight: 700; margin: calc(var(--s) * 10px) 0 calc(var(--s) * 4px); }
+  #settings .col > h3:first-child { margin-top: 0; }
+  #settings .row { padding: calc(var(--s) * 3px) 0; }
+  #settings .full { grid-column: 1 / -1; }
+  #settings .row .top { display: flex; justify-content: space-between; color: rgba(255,255,255,0.85); }
+  #settings .row .top span:last-child { font-variant-numeric: tabular-nums; color: #fff; font-weight: 600; }
+  #settings input[type=range] {
+    width: 100%; margin-top: calc(var(--s) * 2px); height: calc(var(--s) * 26px);
+    accent-color: #f2c14e; touch-action: pan-x;
+  }
+  #settings .seg { display: flex; gap: calc(var(--s) * 6px); margin-top: calc(var(--s) * 6px); }
+  #settings button {
+    flex: 1; font: inherit; font-weight: 600; color: #fff; cursor: pointer;
+    padding: calc(var(--s) * 9px) calc(var(--s) * 10px); border-radius: calc(var(--s) * 8px);
+    border: 1px solid rgba(255,255,255,0.22); background: rgba(255,255,255,0.06);
+  }
+  #settings button.on { background: #f2c14e; color: #1a1408; border-color: #f2c14e; }
+  #settings .actions { display: flex; gap: calc(var(--s) * 10px); margin-top: calc(var(--s) * 10px); }
+  #settings .actions .primary { background: #f2c14e; color: #1a1408; border-color: #f2c14e; }
+  #settings .note { font-size: calc(var(--s) * 12px); color: rgba(255,255,255,0.55); margin-top: calc(var(--s) * 8px); line-height: 1.35; }
   #overlay {
     position: absolute; inset: 0; display: flex; flex-direction: column;
     align-items: center; justify-content: center; text-align: center; color: #fff;
@@ -102,6 +147,28 @@
     <div id="hint"></div>
   </div>
   <div id="overlay"></div>
+  <button id="gear" class="ui" aria-label="Settings">&#9881;</button>
+  <div id="settings" class="ui hidden">
+    <div class="card">
+      <div class="col">
+      <h3>SPEED</h3>
+      <div class="row"><div class="top"><span>Starting truck speed</span><span id="v-startMph"></span></div><input type="range" id="s-startMph" min="15" max="90" step="1"></div>
+      <div class="row"><div class="top"><span>Speed-up per house</span><span id="v-rampMph"></span></div><input type="range" id="s-rampMph" min="0" max="8" step="0.5"></div>
+      <div class="row"><div class="top"><span>Top speed</span><span id="v-maxMph"></span></div><input type="range" id="s-maxMph" min="30" max="150" step="5"></div>
+      <div class="row"><div class="top"><span>Aim guide</span><span></span></div>
+        <div class="seg" id="s-guide"><button data-v="first">First 3</button><button data-v="always">Always</button><button data-v="off">Off</button></div></div>
+      <div class="note">Dotted line = launch arc preview. Changes apply instantly and are saved.</div>
+      </div>
+      <div class="col">
+      <h3>TRAJECTORY</h3>
+      <div class="row"><div class="top"><span>Launch power</span><span id="v-power"></span></div><input type="range" id="s-power" min="60" max="140" step="1"></div>
+      <div class="row"><div class="top"><span>Launch angle</span><span id="v-angle"></span></div><input type="range" id="s-angle" min="40" max="85" step="1"></div>
+      <div class="row"><div class="top"><span>Gravity</span><span id="v-gravity"></span></div><input type="range" id="s-gravity" min="50" max="150" step="1"></div>
+      <div class="row"><div class="top"><span>Hold-to-float strength</span><span id="v-float"></span></div><input type="range" id="s-float" min="0" max="75" step="1"></div>
+      <div class="actions"><button id="s-reset">Reset</button><button id="s-done" class="primary">Done</button></div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -137,14 +204,21 @@
   // ================= Constants =================
   const GROUND = 452;               // lawn line where houses stand
   const TRUCK_BASE = GROUND + 54;   // truck tyres sit on the road in front
-  const GRAVITY = 1900;
-  const GRAVITY_FLOAT = 1050;       // while holding: driver floats for a longer/higher arc
   const TRUCK_SX = 110;             // truck's screen x
   const SUN_OX = 96;                // sunroof offset inside truck
   const DRIVER_Y = TRUCK_BASE - 124;
   const PK_OX = 12, PK_OY = -44, PR = 11;   // package offset from driver & radius
-  const LAUNCH_VX = 330, LAUNCH_VY = -920;
-  const BASE_SPEED = 230, SPEED_STEP = 17, MAX_SPEED = 620;
+  // ---- Adjustable speed & trajectory (Settings panel, saved per device) ----
+  const MPH = 6;                    // logical px/s per displayed MPH
+  const DEFAULTS = { startMph: 38, rampMph: 3, maxMph: 105, power: 100, angle: 70, gravity: 100, float: 45, guide: 'first' };
+  const cfg = { ...DEFAULTS };
+  try { Object.assign(cfg, JSON.parse(localStorage.getItem('slamDunkDeliverySettings') || '{}')); } catch (e) {}
+  const BASE_POWER = 977, BASE_GRAVITY = 1900;
+  const gravity = () => BASE_GRAVITY * cfg.gravity / 100;
+  const floatGravity = () => gravity() * (1 - cfg.float / 100);   // while holding: longer/higher arc
+  const launchVX = () => BASE_POWER * cfg.power / 100 * Math.cos(cfg.angle * Math.PI / 180);
+  const launchVY = () => -BASE_POWER * cfg.power / 100 * Math.sin(cfg.angle * Math.PI / 180);
+  const speedFor = lvl => Math.min(Math.max(cfg.maxMph, cfg.startMph) * MPH, (cfg.startMph + lvl * cfg.rampMph) * MPH);
   const WALL = 10;
 
   // ================= Helpers =================
@@ -420,7 +494,7 @@
 
   // ================= State =================
   let state = 'title';     // title | drive | air | result | over
-  let tx = 0, camX = 0, speed = BASE_SPEED, level = 0;
+  let tx = 0, camX = 0, speed = 0, level = 0;
   let score = 0, lives = 3, streak = 0, resultT = 0, overT = 0;
   let high = 0;
   try { high = parseInt(localStorage.getItem('slamDunkDeliveryHigh') || '0', 10) || 0; } catch (e) {}
@@ -814,7 +888,7 @@
   }
 
   function start() {
-    score = 0; lives = 3; streak = 0; level = 0; speed = BASE_SPEED;
+    score = 0; lives = 3; streak = 0; level = 0; speed = speedFor(0);
     resetWorld();
     state = 'drive';
     holding = false;
@@ -831,8 +905,8 @@
     driver.mode = 'air';
     driver.x = tx + SUN_OX;
     driver.y = DRIVER_Y;
-    driver.vx = speed + LAUNCH_VX;
-    driver.vy = LAUNCH_VY;
+    driver.vx = speed + launchVX();
+    driver.vy = launchVY();
     driver.rot = 0;
     sfx.launch();
     for (let i = 0; i < 12; i++) addPuff(driver.x + rand(-14, 14), TRUCK_BASE - 112, rand(-140, 40), rand(-50, 20), rand(10, 18), 0.6, puffSprite, 0.5, 2.2);
@@ -843,7 +917,7 @@
   function nextRound() {
     if (lives <= 0) { gameOver(); return; }
     level++;
-    speed = Math.min(MAX_SPEED, BASE_SPEED + level * SPEED_STEP);
+    speed = speedFor(level);
     const last = houses[houses.length - 1];
     const nx = Math.max(camX + W + 90, last.x + last.w + 230);
     active = makeHouse(nx, level);
@@ -1013,7 +1087,7 @@
       const steps = 3, h = dt / steps;
       for (let i = 0; i < steps && driver.mode === 'air'; i++) {
         const ppx = driver.x + PK_OX, ppy = driver.y + PK_OY;
-        driver.vy += (holding ? GRAVITY_FLOAT : GRAVITY) * h;
+        driver.vy += (holding ? floatGravity() : gravity()) * h;
         driver.x += driver.vx * h; driver.y += driver.vy * h;
         driver.rot = clamp(driver.vy / 2200, -0.35, 0.45);
         checkPackage(ppx, ppy, driver.x + PK_OX, driver.y + PK_OY);
@@ -1022,7 +1096,7 @@
         addPuff(driver.x - 8, driver.y + 20, rand(-80, -40), rand(20, 50), 5, 0.4, puffSprite, 0.35, 2);
       }
     } else if (driver.mode === 'ragdoll') {
-      driver.vy += GRAVITY * dt; driver.x += driver.vx * dt; driver.y += driver.vy * dt; driver.rot += driver.vr * dt;
+      driver.vy += gravity() * dt; driver.x += driver.vx * dt; driver.y += driver.vy * dt; driver.rot += driver.vr * dt;
       if (driver.y > H + 120) driver.mode = 'gone';
     }
 
@@ -1249,14 +1323,20 @@
 
   function drawPrediction() {
     // faint guide arc for the first few houses
-    if (state !== 'drive' || level > 2) return;
-    let x = tx + SUN_OX + PK_OX, y = DRIVER_Y + PK_OY, vx = speed + LAUNCH_VX, vy = LAUNCH_VY;
-    ctx.fillStyle = 'rgba(255,255,255,0.55)';
-    for (let i = 0; i < 90; i++) {
-      const h = 1 / 60;
-      vy += GRAVITY * h; x += vx * h; y += vy * h;
+    const show = settingsOpen || (state === 'drive' && (cfg.guide === 'always' || (cfg.guide === 'first' && level <= 2)));
+    if (!show || state === 'air' || state === 'result') return;
+    const G = gravity();
+    let x = tx + SUN_OX + PK_OX, y = DRIVER_Y + PK_OY, vx = (state === 'drive' ? speed : speedFor(0)) + launchVX(), vy = launchVY();
+    ctx.fillStyle = settingsOpen ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.55)';
+    const r = settingsOpen ? 3 : 2.2;
+    let dist = 0;
+    for (let i = 0; i < 600; i++) {
+      const h = 1 / 240;
+      const px = x, py = y;
+      vy += G * h; x += vx * h; y += vy * h;
       if (y > GROUND) break;
-      if (i % 4 === 0) { ctx.beginPath(); ctx.arc(x, y, 2.2, 0, Math.PI * 2); ctx.fill(); }
+      dist += Math.hypot(x - px, y - py);
+      if (dist >= 16) { dist = 0; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); }
     }
   }
 
@@ -1368,10 +1448,10 @@
     let l = '';
     for (let i = 0; i < 3; i++) l += `<div class="pkg${i >= lives ? ' lost' : ''}"></div>`;
     $lives.innerHTML = l;
-    $level.textContent = state === 'title' ? '' : `HOUSE ${level + 1}  ·  ${Math.round(speed / 6)} MPH`;
+    $level.textContent = state === 'title' ? '' : `HOUSE ${level + 1}  ·  ${Math.round(speed / MPH)} MPH`;
     $hint.innerHTML = isTouch
       ? '<b>Tap</b> to dunk · <b>hold</b> to float'
-      : 'Press <b>Space</b> to dunk · <b>hold</b> to float';
+      : 'Press <b>Space</b> to dunk · <b>hold</b> to float · <b>S</b> settings';
   }
 
   function showOverlay(html) {
@@ -1382,7 +1462,45 @@
   }
 
   // ================= Input (keyboard + touch / pointer) =================
+  // ---- Settings panel ----
+  let settingsOpen = false;
+  const $settings = document.getElementById('settings');
+  const FMT = {
+    startMph: v => v + ' mph', rampMph: v => '+' + v + ' mph', maxMph: v => v + ' mph',
+    power: v => v + '%', angle: v => v + '°', gravity: v => v + '%', float: v => v + '%',
+  };
+  function saveCfg() { try { localStorage.setItem('slamDunkDeliverySettings', JSON.stringify(cfg)); } catch (e) {} }
+  function syncSettings() {
+    for (const k of Object.keys(FMT)) {
+      document.getElementById('s-' + k).value = cfg[k];
+      document.getElementById('v-' + k).textContent = FMT[k](cfg[k]);
+    }
+    document.querySelectorAll('#s-guide button').forEach(b => b.classList.toggle('on', b.dataset.v === cfg.guide));
+  }
+  function applyCfg() {
+    if (state !== 'title' && state !== 'over') speed = speedFor(level);
+    saveCfg(); syncSettings(); updateHud();
+  }
+  for (const k of Object.keys(FMT)) {
+    document.getElementById('s-' + k).addEventListener('input', e => { cfg[k] = parseFloat(e.target.value); applyCfg(); });
+  }
+  document.querySelectorAll('#s-guide button').forEach(b => b.addEventListener('click', () => { cfg.guide = b.dataset.v; applyCfg(); }));
+  document.getElementById('s-reset').addEventListener('click', () => { Object.assign(cfg, DEFAULTS); applyCfg(); });
+  function openSettings(open) {
+    settingsOpen = open;
+    holding = false; activePointers.clear();
+    $settings.classList.toggle('hidden', !open);
+    wrap.classList.toggle('settings-open', open);
+    if (open) syncSettings();
+    last = performance.now();
+  }
+  document.getElementById('s-done').addEventListener('click', () => openSettings(false));
+  document.getElementById('gear').addEventListener('click', () => { unlockAudio(); openSettings(!settingsOpen); });
+  $settings.addEventListener('click', e => { if (e.target === $settings) openSettings(false); });
+  const onUi = e => e.target && e.target.closest && e.target.closest('.ui');
+
   function press() {
+    if (settingsOpen) return;
     unlockAudio();
     if (state === 'title') { start(); return; }
     if (state === 'over') { if (overT > 0.8) start(); return; }
@@ -1392,6 +1510,8 @@
   function release() { holding = false; }
 
   window.addEventListener('keydown', e => {
+    if (e.code === 'Escape' || e.key === 's' || e.key === 'S') { openSettings(e.code === 'Escape' ? false : !settingsOpen); return; }
+    if (settingsOpen) return;
     if (e.code === 'Space' || e.key === ' ' || e.code === 'ArrowUp' || e.code === 'Enter') {
       e.preventDefault();
       if (!e.repeat) press();
@@ -1403,6 +1523,7 @@
 
   const activePointers = new Set();
   window.addEventListener('pointerdown', e => {
+    if (onUi(e)) return;
     e.preventDefault();
     const first = activePointers.size === 0;
     activePointers.add(e.pointerId);
@@ -1412,7 +1533,7 @@
   window.addEventListener('pointerup', up);
   window.addEventListener('pointercancel', up);
   // block iOS Safari scroll / pinch / double-tap zoom / callouts
-  ['touchstart', 'touchmove', 'touchend'].forEach(t => window.addEventListener(t, e => e.preventDefault(), { passive: false }));
+  ['touchstart', 'touchmove', 'touchend'].forEach(t => window.addEventListener(t, e => { if (!onUi(e)) e.preventDefault(); }, { passive: false }));
   ['gesturestart', 'gesturechange', 'gestureend', 'contextmenu'].forEach(t => window.addEventListener(t, e => e.preventDefault()));
   window.addEventListener('blur', () => { activePointers.clear(); release(); });
   document.addEventListener('visibilitychange', () => { if (document.hidden) { activePointers.clear(); release(); } });
@@ -1424,11 +1545,12 @@
   function frame(now) {
     const dt = Math.min(0.033, (now - last) / 1000);
     last = now;
-    update(dt);
+    if (!settingsOpen) update(dt);
     render();
     requestAnimationFrame(frame);
   }
 
+  speed = speedFor(0);
   RS = 0;          // force static art build on first resize
   resize();
   resetWorld();
