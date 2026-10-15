@@ -6,8 +6,9 @@ including on an iPad, with nothing to install.
 
 ## Modes
 
-- **Story**: 8 levels that teach running, jumping, wall jumps, dashing, moving
-  platforms, checkpoints and fighting. Progress is saved in your browser.
+- **Story**: 14 levels that teach running, jumping, wall jumps, dashing,
+  double jumping, moving platforms, checkpoints and fighting. Progress is saved
+  in your browser.
 - **Arena**: survive waves of red stick enemies with 5 hit points. You get one
   point back after every wave. Chain hits for a combo bonus. Your best wave is
   saved.
@@ -35,6 +36,8 @@ the iPad works too.
 
 - Hold jump to go higher and tap it for a short hop. Jump while touching a
   wall to wall-jump.
+- Press jump again in mid-air to double jump (with a front flip). It unlocks
+  at story level 5 and refills when you land, grab a wall, stomp or hit an enemy.
 - You get one dash per jump. It refills when you land, grab a wall or hit an
   enemy. Dashing through an enemy hurts it.
 - Press attack repeatedly on the ground for a jab, cross, kick combo. In the
@@ -72,4 +75,5 @@ g  walker             f  flyer             s  shooter        F  fighter
 
 The player is about 1½ blocks tall, so leave at least 2 empty rows anywhere
 they need to walk under something. A normal jump clears about 3 blocks up and
-5 blocks across. With a dash it clears about 8 across.
+5 blocks across. A double jump reaches about 5 blocks up and 9 across, and
+adding a dash makes it about 13 across.
