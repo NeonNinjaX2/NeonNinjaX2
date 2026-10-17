@@ -1,0 +1,1492 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Hustle Dave</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,600;6..96,800&family=Libre+Franklin:wght@400;500;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: the street scene is the hero; a stat strip under it; Dave's work button + news on the left, ledger tabs on the right. */
+:root {
+  --paper: #eef0e3;
+  --card: #f7f8ef;
+  --ink: #1d2a21;
+  --muted: #5d6b5f;
+  --line: #c6cdb7;
+  --green: #2c6a47;
+  --green-soft: #dce8d6;
+  --gold: #a87a1c;
+  --gold-soft: #f3e4bd;
+  --red: #a63d2b;
+  --red-soft: #f3dcd5;
+  --blue: #2f5f8a;
+  --display: "Bodoni Moda", "Didot", Georgia, serif;
+  --body: "Libre Franklin", "Helvetica Neue", Arial, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #111712; --card: #18201a; --ink: #e3e9da; --muted: #93a293; --line: #2c382e;
+    --green: #74b88f; --green-soft: #1f3326; --gold: #dcb257; --gold-soft: #3a3020; --red: #e48068; --red-soft: #3a2420; --blue: #7fb0dc;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #111712; --card: #18201a; --ink: #e3e9da; --muted: #93a293; --line: #2c382e;
+  --green: #74b88f; --green-soft: #1f3326; --gold: #dcb257; --gold-soft: #3a3020; --red: #e48068; --red-soft: #3a2420; --blue: #7fb0dc;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { min-height: 100%; }
+body {
+  margin: 0; background: var(--paper); color: var(--ink); font-family: var(--body); font-size: 14.5px; line-height: 1.45;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 14px 40px;
+}
+button { font: inherit; color: inherit; }
+button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.up { color: var(--green); } .down { color: var(--red); } .mutedt { color: var(--muted); }
+.app { max-width: 1180px; margin: 0 auto; display: grid; gap: 12px; }
+
+/* Header */
+.top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; }
+.brand { font-family: var(--display); font-weight: 800; font-size: clamp(26px, 4vw, 36px); line-height: 1; }
+.brand em { font-style: italic; font-weight: 600; color: var(--green); }
+.clock { display: grid; text-align: center; }
+.clock b { font-family: var(--mono); font-size: 15px; }
+.clock span { font-size: 12px; color: var(--muted); }
+.controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.seg { display: inline-flex; border: 1px solid var(--ink); }
+.seg button { background: none; border: 0; padding: 5px 10px; cursor: pointer; font-family: var(--mono); font-size: 12px; font-weight: 700; }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+.btn { border: 1px solid var(--ink); background: var(--card); padding: 6px 11px; cursor: pointer; font-weight: 700; font-size: 13px; line-height: 1.2; }
+.btn.primary { background: var(--ink); color: var(--paper); }
+.btn.go { background: var(--green); border-color: var(--green); color: var(--card); }
+.btn.danger { border-color: var(--red); color: var(--red); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn.sm { padding: 4px 8px; font-size: 12px; }
+
+/* Scene */
+.scene-wrap { position: relative; border: 2px solid var(--ink); overflow: hidden; background: #8ecae6; }
+#scene { display: block; width: 100%; height: 250px; }
+@media (max-width: 620px) { #scene { height: 200px; } }
+#fx { position: absolute; inset: 0; pointer-events: none; }
+.float { position: absolute; font-family: var(--mono); font-weight: 700; font-size: 14px; white-space: nowrap; transform: translateX(-50%); animation: rise 1.3s ease-out forwards; text-shadow: 0 1px 0 #000, 0 0 6px rgba(0,0,0,.6); color: #fff; }
+.float.good { color: #9ef0b4; } .float.bad { color: #ffb4a3; } .float.gold { color: #ffe08a; }
+@keyframes rise { from { opacity: 1; transform: translate(-50%, 0); } to { opacity: 0; transform: translate(-50%, -60px); } }
+.doing { position: absolute; left: 10px; top: 10px; background: rgba(12, 18, 14, .78); color: #f1f4ea; font-size: 13px; padding: 4px 10px; font-weight: 500; max-width: calc(100% - 20px); }
+.paused-tag { position: absolute; right: 10px; bottom: 10px; background: rgba(12, 18, 14, .78); color: #ffe08a; font-family: var(--mono); font-weight: 700; font-size: 12px; padding: 3px 8px; letter-spacing: .1em; }
+.shake { animation: shake .4s; }
+@keyframes shake { 20% { transform: translateX(-6px); } 40% { transform: translateX(5px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+
+/* Stat strip */
+.hud { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+@media (max-width: 760px) { .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); } .hud .cell:first-child { grid-column: 1 / -1; } }
+.cell { background: var(--card); border: 1px solid var(--line); padding: 6px 10px; min-width: 0; }
+.cell span { display: block; font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.cell b { font-family: var(--mono); font-size: 18px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.cell small { font-family: var(--mono); font-size: 11.5px; color: var(--muted); display: block; }
+.meter { height: 8px; background: var(--line); margin-top: 5px; position: relative; overflow: hidden; }
+.meter i { position: absolute; inset: 0 auto 0 0; background: var(--green); transition: width .3s; }
+.meter.low i { background: var(--red); } .meter.mid i { background: var(--gold); }
+
+/* Main */
+.main { display: grid; grid-template-columns: minmax(0, 330px) minmax(0, 1fr); gap: 16px; align-items: start; }
+@media (max-width: 900px) { .main { grid-template-columns: minmax(0, 1fr); } }
+.side { display: grid; gap: 12px; }
+.work {
+  width: 100%; border: 2px solid var(--ink); background: var(--green); color: var(--card); cursor: pointer;
+  font-family: var(--display); font-weight: 800; font-size: 22px; padding: 10px 12px; box-shadow: 0 4px 0 var(--ink);
+}
+.work small { display: block; font-family: var(--body); font-size: 12.5px; font-weight: 500; }
+.work:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 var(--ink); }
+.work:disabled { background: var(--card); color: var(--muted); cursor: default; box-shadow: 0 4px 0 var(--line); border-color: var(--line); }
+.feed { display: grid; gap: 6px; }
+.feed h3, .panel h3 { margin: 0; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.item { font-size: 13px; border-left: 3px solid var(--line); padding: 2px 0 2px 8px; }
+.item time { display: block; font-family: var(--mono); font-size: 11px; color: var(--muted); }
+.item.news { border-left-color: var(--ink); }
+.item.news .tag { font-size: 10px; font-weight: 700; letter-spacing: .1em; background: var(--ink); color: var(--paper); padding: 0 4px; margin-right: 4px; }
+.item.good { border-left-color: var(--green); } .item.bad { border-left-color: var(--red); } .item.money { border-left-color: var(--gold); }
+
+.tabs { display: flex; flex-wrap: wrap; border-bottom: 2px solid var(--ink); }
+.tab { background: none; border: 0; padding: 8px 12px 6px; cursor: pointer; font-weight: 700; color: var(--muted); border-bottom: 4px solid transparent; margin-bottom: -2px; }
+.tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--green); }
+.panel { padding-top: 12px; display: grid; gap: 14px; }
+.panel p { margin: 0; }
+.note { font-size: 12.5px; color: var(--muted); max-width: 70ch; }
+.opts { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 6px; }
+.opt { text-align: left; background: var(--card); border: 1px solid var(--line); padding: 8px 10px; cursor: pointer; display: grid; gap: 2px; }
+.opt b { font-size: 14px; } .opt span { font-size: 12px; color: var(--muted); }
+.opt[aria-pressed="true"] { border: 2px solid var(--green); background: var(--green-soft); padding: 7px 9px; }
+.opt:disabled { opacity: .5; cursor: not-allowed; }
+.tbl-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { text-align: left; font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); font-weight: 700; padding: 4px 8px; border-bottom: 1px solid var(--ink); }
+td { padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+td.r, th.r { text-align: right; } td.num, .r.num { font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+tr.cur td { background: var(--green-soft); }
+.req { font-size: 12px; } .req .ok { color: var(--green); } .req .no { color: var(--red); }
+.box { background: var(--card); border: 1px solid var(--line); padding: 12px; display: grid; gap: 8px; }
+.box h4 { margin: 0; font-size: 16px; }
+.kv { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 6px 14px; }
+.kv div span { display: block; font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.kv div b { font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 14.5px; }
+.row-btns { display: flex; flex-wrap: wrap; gap: 6px; }
+.bar { height: 10px; background: var(--line); position: relative; }
+.bar i { position: absolute; inset: 0 auto 0 0; background: var(--green); }
+canvas.chart { width: 100%; height: 190px; display: block; }
+.assets { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 6px; }
+.asset { text-align: left; background: var(--card); border: 1px solid var(--line); padding: 8px 10px; cursor: pointer; display: grid; gap: 2px; }
+.asset[aria-pressed="true"] { border: 2px solid var(--ink); padding: 7px 9px; }
+.asset b { font-size: 13.5px; } .asset .num { font-size: 15px; }
+.goal { display: flex; gap: 10px; align-items: baseline; padding: 6px 0; border-bottom: 1px solid var(--line); }
+.goal .ck { font-family: var(--mono); font-weight: 700; width: 1.6em; flex: none; color: var(--muted); }
+.goal.done .ck { color: var(--green); } .goal.done b { color: var(--green); }
+
+/* Overlays */
+.overlay { position: fixed; inset: 0; z-index: 30; background: rgba(10, 14, 11, .62); display: grid; place-items: center; overflow-y: auto;
+  padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+.dialog { background: var(--paper); border: 2px solid var(--ink); width: min(560px, 100%); padding: 18px; display: grid; gap: 12px; box-shadow: 0 10px 0 rgba(0,0,0,.25); }
+.dialog h2 { font-family: var(--display); font-size: 26px; line-height: 1.1; margin: 0; text-wrap: balance; }
+.dialog .kicker { font-size: 11px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
+.dialog.paper .kicker { color: var(--red); }
+.dialog.paper h2 { font-size: 30px; border-top: 3px double var(--ink); border-bottom: 1px solid var(--ink); padding: 8px 0; }
+.choices { display: grid; gap: 6px; }
+.choice { text-align: left; background: var(--card); border: 1px solid var(--ink); padding: 9px 12px; cursor: pointer; display: grid; gap: 2px; }
+.choice b { font-size: 15px; } .choice span { font-size: 12.5px; color: var(--muted); }
+.choice:hover:not(:disabled) { background: var(--green-soft); }
+.choice:disabled { opacity: .45; cursor: not-allowed; }
+.start { width: min(760px, 100%); }
+.start h1 { font-family: var(--display); font-size: clamp(40px, 8vw, 64px); margin: 0; line-height: .95; }
+.start h1 em { color: var(--green); font-weight: 600; }
+.eras { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px; }
+.era { text-align: left; border: 2px solid var(--ink); background: var(--card); padding: 12px; cursor: pointer; display: grid; gap: 4px; align-content: start; }
+.era:hover { background: var(--green-soft); }
+.era b { font-family: var(--display); font-size: 24px; }
+.era span { font-size: 12.5px; color: var(--muted); }
+.how { margin: 0; padding-left: 18px; font-size: 13px; display: grid; gap: 3px; }
+.big { font-family: var(--mono); font-weight: 700; font-size: 34px; }
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 40; background: var(--ink); color: var(--paper); padding: 9px 16px; font-weight: 700; font-size: 13.5px; max-width: calc(100% - 32px); text-align: center; }
+@media (prefers-reduced-motion: reduce) { .float { animation-duration: .6s; } .shake { animation: none; } }
+</style>
+</head>
+<body>
+
+<div class="app" id="app">
+  <header class="top">
+    <div class="brand">Hustle <em>Dave</em></div>
+    <div class="clock"><b id="date">-</b><span id="age">-</span></div>
+    <div class="controls">
+      <div class="seg" id="speed" aria-label="Game speed">
+        <button data-s="0" aria-pressed="false">Pause</button><button data-s="1" aria-pressed="false">1x</button><button data-s="2" aria-pressed="true">2x</button><button data-s="4" aria-pressed="false">4x</button><button data-s="8" aria-pressed="false">8x</button>
+      </div>
+      <button class="btn sm" id="mute">Sound: on</button>
+      <button class="btn sm" id="menuBtn">Menu</button>
+    </div>
+  </header>
+
+  <div class="scene-wrap" id="sceneWrap">
+    <canvas id="scene" aria-label="Dave's street"></canvas>
+    <div id="fx"></div>
+    <div class="doing" id="doing">-</div>
+    <div class="paused-tag" id="pausedTag" hidden>PAUSED</div>
+  </div>
+
+  <div class="hud">
+    <div class="cell"><span>Cash</span><b id="hCash">$0</b><small id="hCard"></small></div>
+    <div class="cell"><span>Net worth</span><b id="hNw">$0</b><small id="hNw2"></small></div>
+    <div class="cell"><span>Health</span><div class="meter" id="mHealth"><i></i></div><small id="tHealth"></small></div>
+    <div class="cell"><span>Happiness</span><div class="meter" id="mHappy"><i></i></div><small id="tHappy"></small></div>
+    <div class="cell"><span>Job performance</span><div class="meter" id="mPerf"><i></i></div><small id="tPerf"></small></div>
+  </div>
+
+  <div class="main">
+    <aside class="side">
+      <button class="work" id="workBtn" disabled>Work hard<small id="workSub">-</small></button>
+      <p class="note" id="workNote">Clicking during work hours raises Dave's performance. High performance means bigger raises, bonuses, and less chance of getting laid off. Shortcut: space bar.</p>
+      <div class="feed" id="feed"><h3>News &amp; life</h3></div>
+    </aside>
+    <section>
+      <div class="tabs" role="tablist" id="tabs">
+        <button class="tab" role="tab" data-tab="life">Life</button>
+        <button class="tab" role="tab" data-tab="jobs">Jobs</button>
+        <button class="tab" role="tab" data-tab="school">School</button>
+        <button class="tab" role="tab" data-tab="money">Money</button>
+        <button class="tab" role="tab" data-tab="invest">Invest</button>
+        <button class="tab" role="tab" data-tab="goals">Goals</button>
+      </div>
+      <div class="panel" id="panel" role="tabpanel"></div>
+    </section>
+  </div>
+</div>
+
+<div class="overlay" id="startScreen">
+  <div class="dialog start">
+    <div class="kicker">A life sim with real history</div>
+    <h1>Hustle <em>Dave</em></h1>
+    <p>Dave just turned 18. He has $1,500 and a bedroom at his mom's house. You get ten real years. Pick when his story starts: the stock market, gas prices, inflation, home prices and the news all follow what actually happened.</p>
+    <div class="eras" id="eras"></div>
+    <div class="row-btns" id="continueRow"></div>
+    <ul class="how">
+      <li>Get a job, then click <b>Work hard</b> during work hours to earn raises.</li>
+      <li>Rent, food, gas, taxes and loans come out automatically. Run out of cash and it goes on a 22% credit card.</li>
+      <li>School unlocks better jobs. Investing, a house and a car are up to you.</li>
+      <li>The score is Dave's net worth when the ten years end.</li>
+    </ul>
+    <div id="scores"></div>
+  </div>
+</div>
+
+<div class="overlay" id="modal" hidden><div class="dialog" id="modalCard"></div></div>
+<div class="toast" id="toast" hidden></div>
+
+<script id="gamedata" type="application/json">__GAMEDATA__</script>
+<script>
+(() => {
+  'use strict';
+  const DATA = JSON.parse(document.getElementById('gamedata').textContent);
+  const $ = id => document.getElementById(id);
+  const DAY = 864e5, D0 = Date.UTC(2000, 0, 1);
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const rnd = Math.random;
+  const pick = a => a[Math.floor(rnd() * a.length)];
+
+  // ================= Real data =================
+  const mIdx = d => (d.getUTCFullYear() - 1999) * 12 + d.getUTCMonth() - 11;
+  const mval = (k, d) => { const a = DATA[k]; return a[clamp(mIdx(d), 0, a.length - 1)]; };
+  const dval = (k, d) => { const a = DATA[k]; return a[clamp(Math.round((d.getTime() - D0) / DAY), 0, a.length - 1)]; };
+  const BASE16 = new Date(Date.UTC(2016, 0, 15));
+  const CPI16 = mval('cpi', BASE16), HOUSE16 = mval('house', BASE16);
+  const CPI_LATEST = DATA.cpi[DATA.cpi.length - 1];
+  const infl = d => mval('cpi', d) / CPI16;
+  const bondYield = d => mval('bond', d);
+  const savingsApy = d => Math.max(0.1, bondYield(d) - 1);
+  const mortgageRate = d => bondYield(d) + 1.75;
+  const gasPrice = d => Math.max(1.6, 0.024 * Math.max(10, dval('oil', d)) + 1.2);
+  const medianHome = d => 235000 * mval('house', d) / HOUSE16;
+  const ASSETS = {
+    sp:   { name: 'S&P 500 index fund', unit: 'share', note: 'The 500 biggest US companies. Real monthly average prices (dividends not included).', get: d => mval('sp', d) / 10, monthly: true },
+    gold: { name: 'Gold', unit: 'oz', note: 'Real monthly gold price per ounce.', get: d => mval('gold', d), monthly: true },
+    oil:  { name: 'Oil fund (WTI crude)', unit: 'barrel', note: 'Real daily WTI crude price per barrel. Wild swings.', get: d => dval('oil', d), monthly: false },
+  };
+
+  // ================= Game content =================
+  // Wages and prices are in 2016 dollars and scale with real inflation (CPI).
+  const JOBS = [
+    { id: 'fastfood', name: 'Fast Food Crew', place: 'burger', wage: 9.5, field: 'service', stress: 5, phys: 3, risk: 1.4, benefits: false, partOk: true, covid: 0.55, req: [] },
+    { id: 'cashier', name: 'Grocery Cashier', place: 'grocery', wage: 10, field: 'retail', stress: 4, phys: 2, risk: 0.8, benefits: false, partOk: true, covid: 0, req: [] },
+    { id: 'warehouse', name: 'Warehouse Associate', place: 'warehouse', wage: 13.5, field: 'logistics', stress: 4, phys: 7, risk: 1.1, benefits: true, partOk: true, covid: 0.08, req: [] },
+    { id: 'driver', name: 'Delivery Driver', place: 'warehouse', wage: 15.5, field: 'logistics', stress: 5, phys: 4, risk: 1, benefits: false, partOk: true, covid: 0.03, req: [{ car: true }] },
+    { id: 'office', name: 'Office Assistant', place: 'office', wage: 15.5, field: 'office', stress: 4, phys: 1, risk: 1, benefits: true, covid: 0.15, req: [{ edu: 'assoc' }] },
+    { id: 'supervisor', name: 'Grocery Supervisor', place: 'grocery', wage: 19, field: 'retail', stress: 6, phys: 2, risk: 0.9, benefits: true, covid: 0, req: [{ exp: ['retail', 18] }] },
+    { id: 'trucker', name: 'Truck Driver', place: 'depot', wage: 20.5, field: 'logistics', stress: 6, phys: 5, risk: 1.1, benefits: true, covid: 0.05, req: [{ edu: 'cdl' }] },
+    { id: 'electrician', name: 'Electrician', place: 'site', wage: 25.5, field: 'trade', stress: 5, phys: 5, risk: 1.2, benefits: true, covid: 0.12, req: [{ edu: 'trade' }] },
+    { id: 'storemgr', name: 'Store Manager', place: 'grocery', wage: 27, field: 'retail', stress: 7, phys: 2, risk: 0.9, benefits: true, covid: 0, req: [{ exp: ['retail', 48] }] },
+    { id: 'jrdev', name: 'Junior Web Developer', place: 'office', wage: 30, field: 'tech', stress: 6, phys: 1, risk: 1.2, benefits: true, covid: 0.08, req: [{ edu: 'bootcamp' }, { edu: 'cs' }] },
+    { id: 'accountant', name: 'Accountant', place: 'office', wage: 32.5, field: 'finance', stress: 6, phys: 1, risk: 0.7, benefits: true, covid: 0.05, req: [{ edu: 'business' }] },
+    { id: 'nurse', name: 'Registered Nurse', place: 'hospital', wage: 33.5, field: 'health', stress: 8, phys: 4, risk: 0.3, benefits: true, covid: 0, req: [{ edu: 'nursing' }] },
+    { id: 'mastelec', name: 'Master Electrician', place: 'site', wage: 34, field: 'trade', stress: 5, phys: 4, risk: 1, benefits: true, covid: 0.08, req: [{ edu: 'trade', exp: ['trade', 48] }] },
+    { id: 'nursemgr', name: 'Nurse Manager', place: 'hospital', wage: 45, field: 'health', stress: 8, phys: 2, risk: 0.3, benefits: true, covid: 0, req: [{ edu: 'nursing', exp: ['health', 48] }] },
+    { id: 'developer', name: 'Software Developer', place: 'office', wage: 48, field: 'tech', stress: 6, phys: 1, risk: 0.9, benefits: true, covid: 0.04, req: [{ edu: 'cs' }, { edu: 'bootcamp', exp: ['tech', 24] }] },
+    { id: 'finmgr', name: 'Finance Manager', place: 'office', wage: 58, field: 'finance', stress: 7, phys: 1, risk: 0.7, benefits: true, covid: 0.03, req: [{ edu: 'business', exp: ['finance', 60] }] },
+    { id: 'senior', name: 'Senior Software Engineer', place: 'office', wage: 68, field: 'tech', stress: 7, phys: 1, risk: 0.8, benefits: true, covid: 0.03, req: [{ exp: ['tech', 60] }] },
+  ];
+  const JOB = Object.fromEntries(JOBS.map(j => [j.id, j]));
+  const PLACES = {
+    burger: 'Burger Barn', grocery: 'FreshMart', warehouse: 'ShipFast warehouse', depot: 'Interstate Freight',
+    office: 'Midtown Tower', hospital: 'St. Mary’s Hospital', site: 'a construction site',
+  };
+  const COURSES = [
+    { id: 'cdl', name: 'Truck Driving School (CDL)', units: 45, cost: 5000, unlocks: 'Truck Driver' },
+    { id: 'bootcamp', name: 'Coding Bootcamp', units: 90, cost: 12000, unlocks: 'Junior Web Developer' },
+    { id: 'trade', name: 'Electrician Trade School', units: 270, cost: 10000, unlocks: 'Electrician' },
+    { id: 'assoc', name: 'Community College (associate degree)', units: 730, cost: 7000, unlocks: 'Office Assistant. Also cuts any university degree to 2 more years.' },
+    { id: 'business', name: 'University: Accounting', units: 1460, cost: 38000, uni: true, unlocks: 'Accountant' },
+    { id: 'nursing', name: 'University: Nursing', units: 1460, cost: 40000, uni: true, unlocks: 'Registered Nurse' },
+    { id: 'cs', name: 'University: Computer Science', units: 1460, cost: 38000, uni: true, unlocks: 'Software Developer' },
+  ];
+  const COURSE = Object.fromEntries(COURSES.map(c => [c.id, c]));
+  const HOUSING = {
+    mom: { name: 'Mom’s house', rent: 0, food: 160, mood: 0 },
+    roommates: { name: 'Apartment with roommates', rent: 700, food: 320, mood: 0.06 },
+    studio: { name: 'Studio apartment', rent: 1050, food: 320, mood: 0.12 },
+    onebed: { name: 'One-bedroom apartment', rent: 1350, food: 320, mood: 0.2 },
+  };
+  const STYLES = {
+    frugal: { name: 'Frugal', fun: 80, food: 0.85, mood: -0.18, desc: 'Coupons, no takeout. Happiness drops slowly.' },
+    normal: { name: 'Normal', fun: 300, food: 1, mood: 0, desc: 'A movie, some takeout, new shoes sometimes.' },
+    fancy: { name: 'Fancy', fun: 1000, food: 1.5, mood: 0.28, desc: 'Concerts, restaurants, nice clothes.' },
+  };
+  const ROUTINES = {
+    rest: { name: 'Rest', desc: 'Relax at home. Happiness and health go up.' },
+    gym: { name: 'Gym', desc: '$35/mo. Health goes up a lot.' },
+    gig: { name: 'Side gig', desc: 'Rideshare driving with a car ($17/hr), odd jobs without ($11/hr). Tiring.' },
+    study: { name: 'Study', desc: 'Night classes, if enrolled part-time.' },
+  };
+  const CARS = {
+    used: { name: 'Used sedan', price: 8000, rate: 6.5 },
+    new: { name: 'New car', price: 26000, rate: 4.5 },
+  };
+
+  // Real headlines. fx: what the event does in the game.
+  const NEWS = [
+    ['2000-03-10', 'The Nasdaq hits an all-time high. Everyone is buying dot-com stocks.'],
+    ['2000-04-14', 'Dot-com crash: the Nasdaq loses 25% in one week.', { big: true }],
+    ['2001-03-01', 'The US economy slides into recession.'],
+    ['2001-09-11', 'Terrorist attacks hit New York and Washington. Markets close for four days.', { big: true }],
+    ['2001-12-02', 'Energy giant Enron files for bankruptcy.'],
+    ['2003-03-20', 'The Iraq War begins.'],
+    ['2004-08-19', 'Google goes public at $85 a share.'],
+    ['2005-08-29', 'Hurricane Katrina hits New Orleans. Gas prices spike.'],
+    ['2006-07-01', 'US home prices hit a record high.'],
+    ['2007-04-02', 'Subprime mortgage lender New Century files for bankruptcy.'],
+    ['2007-06-29', 'Apple releases the first iPhone.'],
+    ['2007-12-01', 'The Great Recession begins.'],
+    ['2008-03-16', 'Bear Stearns collapses and is sold to JPMorgan.'],
+    ['2008-05-02', 'Stimulus rebate checks start arriving.', { big: true, fx: 'stim2008' }],
+    ['2008-07-11', 'Oil hits a record $147 a barrel.'],
+    ['2008-09-15', 'Lehman Brothers files for bankruptcy. Panic on Wall Street.', { big: true }],
+    ['2008-10-03', 'Congress passes a $700 billion bank bailout.'],
+    ['2009-02-17', 'A $787 billion stimulus bill is signed.'],
+    ['2009-03-09', 'Stocks hit bottom, down 57% from their peak.'],
+    ['2009-06-01', 'General Motors files for bankruptcy.'],
+    ['2009-10-01', 'Unemployment reaches 10%.'],
+    ['2010-03-23', 'The Affordable Care Act becomes law.'],
+    ['2010-05-06', 'Flash crash: the Dow drops 1,000 points in minutes, then bounces back.'],
+    ['2011-08-05', 'S&P downgrades the US credit rating for the first time ever.'],
+    ['2012-05-18', 'Facebook goes public.'],
+    ['2013-10-01', 'The government shuts down for 16 days.'],
+    ['2014-11-27', 'OPEC keeps pumping and oil prices collapse.'],
+    ['2015-08-24', 'Fears about China hit markets. The Dow drops 1,000 points at the open.'],
+    ['2015-12-16', 'The Fed raises interest rates for the first time since 2006.'],
+    ['2016-06-23', 'The UK votes to leave the European Union.'],
+    ['2016-11-08', 'Donald Trump wins the presidential election.'],
+    ['2017-12-22', 'A big tax cut bill is signed into law.'],
+    ['2018-02-05', 'Volatility spike: the Dow falls 1,175 points in a day.'],
+    ['2018-12-24', 'Christmas Eve selloff caps the worst December for stocks since 1931.'],
+    ['2019-07-31', 'The Fed cuts rates for the first time since 2008.'],
+    ['2020-01-21', 'The first US case of a new coronavirus is confirmed.'],
+    ['2020-03-11', 'COVID-19 is declared a pandemic.'],
+    ['2020-03-16', 'Stocks crash and the VIX fear index closes at a record 82.69. Restaurants and stores close.', { big: true, fx: 'covid' }],
+    ['2020-03-27', 'The CARES Act passes: $1,200 checks and an extra $600 a week for the unemployed.'],
+    ['2020-04-15', 'Stimulus checks of $1,200 arrive.', { big: true, fx: 'stim:1200' }],
+    ['2020-04-20', 'Oil prices go negative for the first time in history.', { big: true }],
+    ['2020-12-11', 'The first COVID vaccine is authorized in the US.'],
+    ['2021-01-04', 'Second stimulus checks of $600 arrive.', { fx: 'stim:600' }],
+    ['2021-01-27', 'GameStop mania: Reddit traders send the stock up 1,700%.'],
+    ['2021-03-17', 'Third stimulus checks of $1,400 arrive.', { fx: 'stim:1400' }],
+    ['2021-11-10', 'Inflation hits 6.2%, the highest in 30 years.'],
+    ['2022-02-24', 'Russia invades Ukraine. Oil and gas prices jump.', { big: true }],
+    ['2022-03-16', 'The Fed starts raising interest rates to fight inflation.'],
+    ['2022-07-13', 'Inflation hits 9.1%, a 40-year high.', { big: true }],
+    ['2022-11-11', 'Crypto exchange FTX collapses.'],
+    ['2022-11-30', 'ChatGPT launches. The AI boom begins.'],
+    ['2023-03-10', 'Silicon Valley Bank collapses.'],
+    ['2023-07-26', 'The Fed raises rates to a 22-year high.'],
+    ['2024-02-23', 'Nvidia passes $2 trillion as AI stocks soar.'],
+    ['2024-09-18', 'The Fed cuts interest rates for the first time in four years.'],
+    ['2025-04-02', 'Big new tariffs are announced. Stocks drop over 10% in two days.', { big: true }],
+    ['2025-04-09', 'The tariffs are paused for 90 days. Stocks jump 9.5% in one day.'],
+  ].map(([d, t, o]) => ({ ms: Date.parse(d + 'T00:00:00Z'), date: d, text: t, ...(o || {}) }));
+
+  const GOALS = [
+    ['job', 'Get a job', () => !!S.job],
+    ['fund', 'Put $1,000 in a savings account', () => S.savings >= 1000 * fNow()],
+    ['invest', 'Make your first investment', () => S.invested],
+    ['moveout', 'Move out of Mom’s house', () => S.housing !== 'mom' || !!S.house],
+    ['car', 'Buy a car', () => !!S.car],
+    ['grad', 'Finish a school program', () => S.edu.length > 0],
+    ['k50', 'Earn $50,000 a year', () => S.job && annualWage() >= 50000],
+    ['nw10', 'Reach a $10,000 net worth', () => netWorth() >= 1e4],
+    ['debt', 'Have no credit card or student debt with $25,000 net worth', () => S.card < 1 && S.studentLoan < 1 && netWorth() >= 25000],
+    ['house', 'Buy a house', () => !!S.house],
+    ['k100', 'Earn $100,000 a year', () => S.job && annualWage() >= 1e5],
+    ['nw100', 'Reach a $100,000 net worth', () => netWorth() >= 1e5],
+    ['nw500', 'Reach a $500,000 net worth', () => netWorth() >= 5e5],
+    ['nw1m', 'Become a millionaire', () => netWorth() >= 1e6],
+  ];
+
+  // ================= State =================
+  const SAVE = 'hustle-dave-v2', SCORES = 'hustle-dave-scores';
+  let S = null;
+  let tab = 'life', modalOpen = false, started = false, muted = false, investSel = 'sp';
+  const DAY_MS = 1200;
+
+  function newGame(era) {
+    const startMs = Date.UTC(era, 0, 1);
+    const f = infl(new Date(startMs));
+    S = {
+      v: 2, era, startMs, endMs: Date.UTC(era + 10, 0, 1), day: 0, speed: 2,
+      cash: Math.round(1500 * f), savings: 0, card: 0, studentLoan: 0, cardOver: 0,
+      health: 80, happy: 65, ageDays: 18 * 365.25,
+      job: null, perf: 50, pay: 0, gig: 0, expDays: {}, edu: [], course: null, tuitionDue: 0, unemp: null, cooldown: {},
+      housing: 'mom', deposit: 0, house: null, car: null, dog: false, insured: false,
+      routine: 'rest', style: 'normal',
+      hold: { sp: 0, gold: 0, oil: 0 }, basis: { sp: 0, gold: 0, oil: 0 }, bonds: 0, bondRate: 0, invested: false,
+      month: { inc: {}, exp: {} }, last: null, lastName: '', earnedYear: {}, totals: { earned: 0, taxes: 0, interest: 0 },
+      hist: [], goals: [], newsIdx: NEWS.findIndex(n => n.ms >= startMs), feed: [], sick: 0, burnout: 0, ot: 0,
+      nextEvent: 25 + Math.floor(rnd() * 25), over: null, seenEvents: {},
+    };
+    if (S.newsIdx < 0) S.newsIdx = NEWS.length;
+    S.hist.push([0, netWorth()]);
+    feed(`Dave turns 18 with ${money(S.cash)} in his pocket. Time to find a job: open the Jobs tab.`, 'good');
+  }
+
+  // ================= Helpers =================
+  const dateOf = day => new Date(S.startMs + day * DAY);
+  const today = () => dateOf(S.day);
+  const fNow = () => infl(today());
+  const age = () => Math.floor(S.ageDays / 365.25);
+  const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const DOW = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const fmtDate = d => `${MONTHS[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}`;
+  const money = (n, dec) => {
+    const neg = n < 0; n = Math.abs(n);
+    const s = n >= 1e7 ? (n / 1e6).toFixed(2) + 'M' : n.toLocaleString('en-US', { minimumFractionDigits: dec ? 2 : 0, maximumFractionDigits: dec ? 2 : 0 });
+    return (neg ? '-$' : '$') + s;
+  };
+  const pct = (n, d = 1) => (n >= 0 ? '+' : '') + n.toFixed(d) + '%';
+  const job = () => S.job && JOB[S.job.id];
+  const insuredNow = () => !!(S.job && JOB[S.job.id].benefits && !S.job.part) || S.insured;
+  const expMonths = field => (S.expDays[field] || 0) / 21.7;
+  const annualWage = () => S.job ? S.job.wage * (S.job.part ? 1040 : 2080) : 0;
+  const assetPrice = (k, d = today()) => ASSETS[k].get(d);
+  function houseValue(d = today()) { return S.house ? S.house.price * mval('house', d) / S.house.idx0 : 0; }
+  function netWorth() {
+    let nw = S.cash + S.savings + S.bonds - S.card - S.studentLoan;
+    for (const k in S.hold) nw += S.hold[k] * Math.max(0, assetPrice(k));
+    if (S.house) nw += houseValue() - S.house.loan;
+    if (S.car) nw += S.car.value - S.car.loan;
+    return nw;
+  }
+  function cardLimit() { return 2000 * fNow() + annualWage() * 0.1; }
+  function addInc(k, v) { S.month.inc[k] = (S.month.inc[k] || 0) + v; }
+  function addExp(k, v) { S.month.exp[k] = (S.month.exp[k] || 0) + v; }
+  function spend(k, v) { S.cash -= v; addExp(k, v); cover(); }
+  function cover() {
+    if (S.cash >= 0) return;
+    const fromSav = Math.min(S.savings, -S.cash);
+    S.savings -= fromSav; S.cash += fromSav;
+    if (S.cash < 0) {
+      if (S.card < 1) feed('Dave ran out of cash. The rest went on his credit card at 22% interest.', 'bad');
+      S.card += -S.cash; S.cash = 0;
+    }
+  }
+  function annualTax(gross, f) {
+    // Simplified 2016 federal brackets, standard deduction + exemption, FICA, and a 4.5% state tax, scaled by inflation.
+    const g = gross / f, taxable = Math.max(0, g - 10350);
+    const B = [[9275, .10], [37650, .15], [91150, .25], [190150, .28], [413350, .33], [415050, .35], [Infinity, .396]];
+    let fed = 0, prev = 0;
+    for (const [cap, r] of B) { if (taxable > prev) fed += (Math.min(taxable, cap) - prev) * r; prev = cap; }
+    const fica = Math.min(g, 118500) * 0.062 + g * 0.0145;
+    return (fed + fica + taxable * 0.045) * f;
+  }
+  function meets(alt) {
+    if (alt.car && !S.car) return false;
+    if (alt.edu && !S.edu.includes(alt.edu)) return false;
+    if (alt.exp && expMonths(alt.exp[0]) < alt.exp[1]) return false;
+    return true;
+  }
+  const qualifies = J => !J.req.length || J.req.some(meets);
+  function reqText(J) {
+    if (!J.req.length) return '<span class="ok">No requirements</span>';
+    return J.req.map(a => {
+      const parts = [];
+      if (a.car) parts.push(`<span class="${S.car ? 'ok' : 'no'}">a car</span>`);
+      if (a.edu) parts.push(`<span class="${S.edu.includes(a.edu) ? 'ok' : 'no'}">${COURSE[a.edu].name.replace('University: ', '') }</span>`);
+      if (a.exp) parts.push(`<span class="${expMonths(a.exp[0]) >= a.exp[1] ? 'ok' : 'no'}">${a.exp[1] / 12} yrs ${a.exp[0]} work (${(expMonths(a.exp[0]) / 12).toFixed(1)})</span>`);
+      return parts.join(' + ');
+    }).join(' <i>or</i> ');
+  }
+
+  // ================= Feed / toast / sound =================
+  function feed(text, kind = '', isNews = false) {
+    S.feed.unshift({ d: fmtDate(today()), text, kind, news: isNews });
+    S.feed.length = Math.min(S.feed.length, 9);
+    renderFeed();
+  }
+  function renderFeed() {
+    $('feed').innerHTML = '<h3>News &amp; life</h3>' + S.feed.map(i =>
+      `<div class="item ${i.news ? 'news' : i.kind}"><time>${i.d}</time>${i.news ? '<span class="tag">REAL NEWS</span>' : ''}${i.text}</div>`).join('');
+  }
+  let toastT;
+  function toast(msg) { const t = $('toast'); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => (t.hidden = true), 3400); }
+  let AC = null;
+  function audio() { if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { AC = null; } } return AC; }
+  function tone(freq, dur, type = 'square', vol = 0.05, delay = 0, slide = 0) {
+    const a = muted ? null : audio(); if (!a) return;
+    try {
+      const t = a.currentTime + delay, o = a.createOscillator(), g = a.createGain();
+      o.type = type; o.frequency.setValueAtTime(freq, t);
+      if (slide) o.frequency.linearRampToValueAtTime(Math.max(30, freq + slide), t + dur);
+      g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o.connect(g); g.connect(a.destination); o.start(t); o.stop(t + dur + 0.02);
+    } catch (e) {}
+  }
+  const SFX = {
+    cash: () => { tone(1319, 0.07, 'square', 0.04); tone(1760, 0.22, 'square', 0.04, 0.07); },
+    click: () => tone(520 + rnd() * 120, 0.04, 'triangle', 0.05),
+    bad: () => { tone(300, 0.35, 'sawtooth', 0.04, 0, -180); },
+    bill: () => tone(196, 0.12, 'triangle', 0.06),
+    goal: () => [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.16, 'square', 0.04, i * 0.09)),
+    news: () => { tone(880, 0.1, 'sine', 0.06); tone(660, 0.18, 'sine', 0.06, 0.12); },
+  };
+  function fx(text, loc, cls = '') {
+    const w = $('scene').clientWidth, el = document.createElement('span');
+    el.className = 'float ' + cls; el.textContent = text;
+    el.style.left = clamp(locX(loc) * w, 40, w - 40) + 'px';
+    el.style.top = '38%';
+    $('fx').appendChild(el); setTimeout(() => el.remove(), 1350);
+  }
+  function shake() { const s = $('sceneWrap'); s.classList.remove('shake'); void s.offsetWidth; s.classList.add('shake'); }
+
+  // ================= Modal =================
+  let modalQueue = [];
+  function modal(def) { modalQueue.push(def); if (!modalOpen) nextModal(); }
+  function nextModal() {
+    const def = modalQueue.shift();
+    if (!def) { modalOpen = false; $('modal').hidden = true; return; }
+    modalOpen = true;
+    const card = $('modalCard');
+    card.className = 'dialog' + (def.paper ? ' paper' : '');
+    card.innerHTML = `<div class="kicker">${def.kicker || fmtDate(today())}</div><h2>${def.title}</h2>${def.body ? `<p>${def.body}</p>` : ''}${def.html || ''}
+      <div class="choices">${def.choices.map((c, i) => `<button class="choice" data-i="${i}" ${c.disabled ? 'disabled' : ''}><b>${c.label}</b>${c.sub ? `<span>${c.sub}</span>` : ''}</button>`).join('')}</div>`;
+    $('modal').hidden = false;
+    if (def.after) def.after();
+    card.querySelectorAll('.choice').forEach(b => b.addEventListener('click', () => {
+      const c = def.choices[+b.dataset.i];
+      if (c.fn) c.fn();
+      nextModal(); refresh(true);
+    }));
+    const first = card.querySelector('.choice:not(:disabled)'); if (first) first.focus();
+  }
+
+  // ================= Daily simulation =================
+  function simDay() {
+    const d = today(), dow = d.getUTCDay(), weekday = dow >= 1 && dow <= 5, f = infl(d), J = job();
+    const working = J && weekday && S.sick <= 0 && S.burnout <= 0;
+    if (working) {
+      const share = S.job.part ? 0.5 : 1;
+      S.pay += S.job.wage * 8 * share;
+      if (S.ot > 0) { S.pay += S.job.wage * 1.5 * 2; S.ot--; S.happy -= 0.3; }
+      S.expDays[J.field] = (S.expDays[J.field] || 0) + share;
+      S.happy -= J.stress * 0.035 * share;
+      S.health -= J.phys * 0.025 * share;
+      S.perf += (45 - S.perf) * 0.035;
+      if (S.happy < 25) S.perf -= 0.6;
+    }
+    if (S.sick > 0) S.sick--;
+    if (S.burnout > 0) { S.burnout--; S.happy += 0.8; }
+    // School
+    if (S.course) {
+      let u = 0;
+      if (S.course.mode === 'full') u = 1;
+      else if (S.routine === 'study') u = weekday ? 0.45 : 0.6;
+      if (u) { S.course.done += u; S.tuitionDue += u * S.course.perUnit * f; S.happy -= 0.12; }
+      if (S.course.done >= S.course.units) graduate();
+    }
+    // Free time
+    const free = weekday ? (J && !S.job.part ? 1 : 1.6) : 2.4;
+    if (S.routine === 'rest') { S.happy += 0.32 * free; S.health += 0.06 * free; }
+    else if (S.routine === 'gym') { S.health += 0.22 * free; S.happy += 0.08 * free; }
+    else if (S.routine === 'gig') {
+      const hrs = weekday ? 3 : 7, rate = (S.car ? 17 : 11) * f;
+      S.gig += hrs * rate; if (S.car) spend('Gas for side gig', hrs * 0.9 * f);
+      S.happy -= 0.18 * free; S.health -= 0.03 * free;
+    } else if (S.routine === 'study' && !S.course) { S.happy += 0.1; }
+    // Mood drift
+    const H = S.house ? { mood: 0.3 } : HOUSING[S.housing];
+    S.happy += H.mood * 0.6 + STYLES[S.style].mood + (S.dog ? 0.12 : 0) + (S.car ? 0.03 : 0);
+    if (S.housing === 'mom' && !S.house && age() >= 23) S.happy -= 0.12 * (age() - 22) * 0.4;
+    if (S.card > cardLimit() * 0.8) S.happy -= 0.2;
+    S.happy += (55 - S.happy) * 0.004;
+    S.health += (70 - S.health) * 0.003;
+    S.happy = clamp(S.happy, 0, 100); S.health = clamp(S.health, 0, 100); S.perf = clamp(S.perf, 0, 100);
+    // Getting sick
+    if (S.sick <= 0 && rnd() < 0.0015 + (100 - S.health) * 0.00008) {
+      S.sick = 2 + Math.floor(rnd() * 3);
+      const bill = (insuredNow() ? 120 : 650) * f;
+      spend('Doctor bills', bill);
+      feed(`Dave got sick and stayed home ${S.sick} days. Doctor bill: ${money(bill)}${insuredNow() ? ' after insurance' : ' (no insurance)'}.`, 'bad');
+      fx('-' + money(bill), 'home', 'bad');
+    }
+    if (S.health <= 0) hospital();
+    if (S.happy <= 0 && S.burnout <= 0) {
+      S.burnout = 10; S.happy = 25;
+      feed('Dave burned out and took two unpaid weeks off. Rest more or spend a bit on fun.', 'bad'); SFX.bad(); shake();
+    }
+    // Paydays
+    const weekNo = Math.floor((d.getTime() / DAY + 4) / 7);
+    if (dow === 5 && weekNo % 2 === 0) payday();
+    if (dow === 0 && S.gig > 0) {
+      const tax = S.gig * 0.25, net = S.gig - tax;
+      S.cash += net; addInc('Side gig income', S.gig); addExp('Taxes', tax); S.totals.taxes += tax; S.totals.earned += S.gig; yearEarn(S.gig);
+      fx('+' + money(net), 'home', 'good'); S.gig = 0;
+    }
+    if (dow === 6 && S.unemp) unemploymentCheck(d);
+    // Review
+    if (S.job && S.day - S.job.review >= 365) review();
+    // Next day
+    S.day++; S.ageDays++;
+    const nd = today();
+    if (age() !== Math.floor((S.ageDays - 1) / 365.25)) feed(`Happy birthday! Dave is ${age()}.`, 'good');
+    if (nd.getUTCDate() === 1) monthly(nd);
+    while (S.newsIdx < NEWS.length && NEWS[S.newsIdx].ms <= nd.getTime()) realNews(NEWS[S.newsIdx++]);
+    if (--S.nextEvent <= 0) { S.nextEvent = 30 + Math.floor(rnd() * 45); randomEvent(); }
+    checkGoals();
+    if (nd.getTime() >= S.endMs) finish('time');
+  }
+
+  function yearEarn(v) { const y = today().getUTCFullYear(); S.earnedYear[y] = (S.earnedYear[y] || 0) + v; }
+  function payday() {
+    const gross = S.pay; if (gross <= 0) return;
+    S.pay = 0;
+    const tax = annualTax(gross * 26, fNow()) / 26, net = gross - tax;
+    S.cash += net; addInc('Paychecks', gross); addExp('Taxes', tax);
+    S.totals.taxes += tax; S.totals.earned += gross; yearEarn(gross);
+    SFX.cash(); fx('Payday +' + money(net), 'work', 'good');
+  }
+  function unemploymentCheck(d) {
+    if (S.day > S.unemp.until) { feed('Dave’s unemployment benefits ran out.', 'bad'); S.unemp = null; return; }
+    let amt = S.unemp.weekly;
+    const t = d.getTime();
+    if (t >= Date.UTC(2020, 3, 4) && t <= Date.UTC(2020, 6, 31)) amt += 600;
+    if (t >= Date.UTC(2021, 0, 2) && t <= Date.UTC(2021, 8, 6)) amt += 300;
+    S.cash += amt; addInc('Unemployment benefits', amt); fx('+' + money(amt), 'home', 'good');
+  }
+  function hospital() {
+    const bill = (insuredNow() ? 1500 : 12000) * fNow();
+    spend('Hospital bill', bill); S.health = 45; S.sick = 10;
+    SFX.bad(); shake();
+    modal({ title: 'Dave collapsed and spent a week in the hospital', body: `His health hit zero. The bill was ${money(bill)}${insuredNow() ? ' after insurance' : ' with no insurance'}. Try the gym or more rest.`, choices: [{ label: 'Okay' }] });
+  }
+  function graduate() {
+    const C = COURSE[S.course.id];
+    S.edu.push(C.id); S.course = null;
+    if (S.routine === 'study') S.routine = 'rest';
+    SFX.goal(); fx('Graduated!', 'school', 'gold');
+    modal({ kicker: 'Graduation', title: `Dave finished ${C.name}!`, body: `New jobs unlocked: ${C.unlocks}. Check the Jobs tab.${S.studentLoan > 0 ? ' Student loan payments start next month.' : ''}`, choices: [{ label: 'Let’s go' }] });
+  }
+  function review() {
+    const J = job(), d = today();
+    const yr = infl(d) / infl(dateOf(Math.max(0, S.day - 365))) - 1;
+    S.job.review = S.day;
+    if (S.perf < 28 && rnd() < 0.5) { loseJob('fired'); return; }
+    const merit = (S.perf - 50) / 10;
+    const raise = Math.max(0, yr * 100 * 0.8 + merit);
+    S.job.wage *= 1 + raise / 100;
+    let bonus = 0;
+    if (S.perf >= 80) { bonus = annualWage() * 0.04; S.pay += bonus; }
+    SFX.cash();
+    feed(`Yearly review at ${PLACES[J.place]}: performance ${Math.round(S.perf)}/100, raise ${raise.toFixed(1)}%${bonus ? `, bonus ${money(bonus)}` : ''}. New pay ${money(S.job.wage, true)}/hr.`, raise > 3 ? 'good' : 'money');
+  }
+  function loseJob(why) {
+    const J = job(); if (!J) return;
+    const weekly = Math.min(S.job.wage * (S.job.part ? 20 : 40) * 0.45, 450 * fNow());
+    S.job = null; S.ot = 0;
+    if (why === 'fired') {
+      S.unemp = null; S.happy -= 15;
+      feed(`Dave was fired from ${PLACES[J.place]} for poor performance. No unemployment benefits.`, 'bad');
+      modal({ title: 'Dave got fired', body: 'His performance was too low at his yearly review. Click Work hard during work hours to keep performance up.', choices: [{ label: 'Find a new job', fn: () => setTab('jobs') }] });
+    } else {
+      S.unemp = { weekly, until: S.day + 182 }; S.happy -= 10;
+      feed(`Dave was laid off from ${PLACES[J.place]}. Unemployment pays ${money(weekly)}/week for 26 weeks.`, 'bad');
+      modal({ title: 'Dave was laid off', body: `${why} Unemployment benefits will pay ${money(weekly)} a week for up to 26 weeks.`, choices: [{ label: 'Look for work', fn: () => setTab('jobs') }] });
+    }
+    SFX.bad(); shake();
+  }
+
+  // ================= Monthly =================
+  function monthly(d) {
+    const f = infl(d), prev = new Date(d.getTime() - DAY);
+    S.last = S.month; S.lastName = MONTHS[prev.getUTCMonth()] + ' ' + prev.getUTCFullYear(); S.month = { inc: {}, exp: {} };
+    const inLast = Object.values(S.last.inc).reduce((a, b) => a + b, 0), outLast = Object.values(S.last.exp).reduce((a, b) => a + b, 0);
+    // Interest earned
+    const si = S.savings * savingsApy(d) / 1200;
+    if (si > 0) { S.savings += si; addInc('Savings interest', si); }
+    const bi = S.bonds * S.bondRate / 1200;
+    if (bi > 0) { S.cash += bi; addInc('Bond interest', bi); }
+    // Bills
+    if (S.house) {
+      const r = S.house.rate / 1200, interest = S.house.loan * r, principal = Math.min(S.house.loan, S.house.pmt - interest);
+      spend('Mortgage', interest + principal); S.house.loan -= principal; S.totals.interest += interest;
+      spend('Property tax & insurance', S.house.price * 0.011 / 12 + 90 * f);
+      if (S.house.loan > S.house.price * 0.8) spend('Mortgage insurance (PMI)', S.house.loan * S.house.pmi / 1200);
+      spend('Home repairs', houseValue(d) * 0.01 / 12);
+    } else if (HOUSING[S.housing].rent) spend('Rent', HOUSING[S.housing].rent * f);
+    spend('Groceries', (S.house ? 320 : HOUSING[S.housing].food) * STYLES[S.style].food * f);
+    spend('Phone', 50 * f);
+    if (S.car) {
+      spend('Car insurance', 110 * f); spend('Gas', 40 * gasPrice(d)); spend('Car upkeep', 40 * f);
+      if (S.car.loan > 0) {
+        const interest = S.car.loan * S.car.rate / 1200, p = Math.min(S.car.loan + interest, S.car.pmt);
+        spend('Car loan', p); S.car.loan = Math.max(0, S.car.loan + interest - p); S.totals.interest += interest;
+      }
+      S.car.value *= 0.988;
+    } else spend('Bus pass', 65 * f);
+    if (S.job && job().benefits && !S.job.part) spend('Health insurance (work plan)', 120 * f);
+    else if (S.insured) spend('Health insurance', 280 * f);
+    if (S.routine === 'gym') spend('Gym', 35 * f);
+    spend('Fun & shopping', STYLES[S.style].fun * f);
+    if (S.dog) spend('Dog food & vet', 90 * f);
+    if (S.tuitionDue > 0) {
+      if (S.course && S.course.loan) S.studentLoan += S.tuitionDue;
+      else spend('Tuition', S.tuitionDue);
+      S.tuitionDue = 0;
+    }
+    if (S.studentLoan > 0) {
+      const interest = S.studentLoan * 0.05 / 12; S.studentLoan += interest; S.totals.interest += interest;
+      if (!S.course) { const p = Math.min(S.studentLoan, Math.max(50 * f, S.studentLoan * 0.0106)); spend('Student loan', p); S.studentLoan -= p; }
+    }
+    if (S.card > 0) {
+      const interest = S.card * 0.22 / 12; S.card += interest; addExp('Credit card interest', interest); S.totals.interest += interest;
+      const minPay = Math.min(S.card, Math.max(25, S.card * 0.03));
+      if (S.cash >= minPay) { S.cash -= minPay; S.card -= minPay; addExp('Credit card payment', minPay); }
+      if (S.card > cardLimit()) {
+        S.cardOver++;
+        if (S.cardOver >= 3) { finish('bankrupt'); return; }
+        SFX.bad(); shake();
+        modal({ title: 'Credit card over the limit', body: `Dave owes ${money(S.card)} on a card with a ${money(cardLimit())} limit. If it’s still over the limit in ${3 - S.cardOver} month${S.cardOver === 2 ? '' : 's'}, he goes bankrupt and the game ends. Cut spending, move somewhere cheaper, sell things or take on a side gig.`, choices: [{ label: 'Open the Money tab', fn: () => setTab('money') }, { label: 'Close' }] });
+      } else S.cardOver = 0;
+    }
+    // Layoffs: risk rises with the real VIX fear index.
+    if (S.job && S.day - S.job.start > 60) {
+      const vix = dval('vix', d), J = job();
+      const p = 0.0035 * J.risk * Math.pow(Math.max(12, vix) / 18, 2) * (1.5 - S.perf / 100);
+      if (rnd() < p) loseJob(vix > 30 ? 'The economy is in trouble and the company is cutting jobs.' : 'The company is cutting costs.');
+    }
+    S.hist.push([S.day, netWorth()]);
+    if (inLast || outLast) { SFX.bill(); toast(`${S.lastName}: ${money(inLast)} in, ${money(outLast)} out`); }
+    if (d.getUTCMonth() === 0) yearly(d);
+    save();
+  }
+  function yearly(d) {
+    feed(`New year! ${d.getUTCFullYear()} begins. Net worth: ${money(netWorth())}.`, 'money');
+  }
+
+  // ================= Real news effects =================
+  function realNews(n) {
+    let extra = '', layoff = null;
+    if (n.fx === 'stim2008') {
+      const amt = (S.earnedYear[2007] || 0) >= 3000 ? 600 : 300;
+      S.cash += amt; addInc('Stimulus check', amt); extra = ` Dave gets ${money(amt)}.`; fx('+' + money(amt), 'home', 'gold');
+    } else if (n.fx && n.fx.startsWith('stim:')) {
+      const amt = +n.fx.slice(5);
+      S.cash += amt; addInc('Stimulus check', amt); extra = ` Dave gets ${money(amt)}.`; fx('+' + money(amt), 'home', 'gold');
+    } else if (n.fx === 'covid') {
+      const J = job();
+      if (J && rnd() < J.covid) layoff = 'COVID-19 shut the business down.';
+      else if (J && J.covid === 0) extra = ' Dave’s job is essential, so he keeps working.';
+      else if (J) extra = ' Dave still has his job, for now.';
+    }
+    feed(n.text + extra, '', true);
+    if (n.big) { SFX.news(); modal({ paper: true, kicker: 'Breaking news · ' + fmtDate(new Date(n.ms)), title: n.text, body: extra.trim() || null, choices: [{ label: 'Keep going' }] }); }
+    if (layoff) loseJob(layoff);
+  }
+
+  // ================= Random life events =================
+  const EVENTS = [
+    { id: 'carfix', ok: () => S.car, run: f => modal({ title: 'Dave’s car broke down', body: 'The mechanic says the transmission is shot.', choices: [
+      { label: `Fix it for ${money(1400 * f)}`, fn: () => { spend('Car repair', 1400 * f); } },
+      { label: `Sell it for scrap (${money(S.car.value * 0.3)}) and take the bus`, sub: S.car.loan > 0 ? `Still owes ${money(S.car.loan)} on the loan, paid from the sale and cash.` : '', fn: () => { const got = S.car.value * 0.3 - S.car.loan; S.cash += got; cover(); S.car = null; if (job() && job().req.some(r => r.car)) loseJob('He can’t do deliveries without a car.'); } } ] }) },
+    { id: 'wedding', ok: () => true, run: f => modal({ title: 'A friend is getting married', body: 'It’s in another state. Flights, hotel and a gift add up.', choices: [
+      { label: `Go (${money(700 * f)})`, sub: 'Happiness +12', fn: () => { spend('Wedding trip', 700 * f); S.happy += 12; } },
+      { label: 'Send a card', sub: 'Happiness -5', fn: () => { S.happy -= 5; } } ] }) },
+    { id: 'phone', ok: () => true, run: f => modal({ title: 'Dave dropped his phone', body: 'The screen is a spiderweb of cracks.', choices: [
+      { label: `Repair it (${money(200 * f)})`, fn: () => spend('Phone repair', 200 * f) },
+      { label: 'Live with it', sub: 'Happiness -4', fn: () => { S.happy -= 4; } } ] }) },
+    { id: 'overtime', ok: () => S.job && !S.job.part, run: () => modal({ title: 'The boss asks for overtime', body: 'Two extra hours a day for the next two weeks, at time and a half.', choices: [
+      { label: 'Take it', sub: `About ${money(S.job.wage * 1.5 * 20)} extra. Tiring.`, fn: () => { S.ot = 10; S.perf += 8; } },
+      { label: 'Say no', fn: () => { S.perf -= 3; } } ] }) },
+    { id: 'raise', ok: () => S.job && S.day - S.job.start > 180, run: () => modal({ title: 'Ask for a raise?', body: `Dave’s performance is ${Math.round(S.perf)}/100. The higher it is, the better his chances.`, choices: [
+      { label: 'Ask for 8% more', fn: () => { if (rnd() < S.perf / 110) { S.job.wage *= 1.08; SFX.cash(); toast('Raise approved! +8%'); feed('Dave asked for a raise and got 8% more.', 'good'); } else { S.perf -= 6; S.happy -= 5; toast('The boss said no.'); } } },
+      { label: 'Not now' } ] }) },
+    { id: 'recruiter', ok: () => S.job && expMonths(job().field) >= 12, run: () => modal({ title: 'A recruiter calls', body: `Another company wants Dave as a ${job().name}, for 12% more pay. He’d start over with no seniority.`, choices: [
+      { label: 'Take the new job', sub: `New pay ${money(S.job.wage * 1.12, true)}/hr`, fn: () => { S.job.wage *= 1.12; S.job.start = S.day; S.job.review = S.day; S.perf = 50; feed('Dave switched companies for a 12% raise.', 'good'); } },
+      { label: 'Stay put', fn: () => { S.perf += 2; } } ] }) },
+    { id: 'dentist', ok: () => true, run: f => modal({ title: 'Toothache', body: 'The dentist finds a cavity.', choices: [
+      { label: `Fill it (${money((insuredNow() ? 150 : 450) * f)})`, fn: () => spend('Dentist', (insuredNow() ? 150 : 450) * f) },
+      { label: 'Ignore it', sub: 'Health -15', fn: () => { S.health -= 15; } } ] }) },
+    { id: 'mom', ok: () => true, run: f => modal({ title: 'Mom needs help', body: 'Her water heater broke and she’s short on money.', choices: [
+      { label: `Give her ${money(800 * f)}`, sub: 'Happiness +8', fn: () => { spend('Helped Mom', 800 * f); S.happy += 8; } },
+      { label: 'Say you can’t right now', sub: 'Happiness -8', fn: () => { S.happy -= 8; } } ] }) },
+    { id: 'vacation', ok: () => true, run: f => modal({ title: 'Beach trip with friends?', body: 'A week at the beach. Everyone’s going.', choices: [
+      { label: `Go (${money(1500 * f)})`, sub: 'Happiness +25, health +5', fn: () => { spend('Vacation', 1500 * f); S.happy += 25; S.health += 5; } },
+      { label: 'Stay home', sub: 'Happiness -6', fn: () => { S.happy -= 6; } } ] }) },
+    { id: 'dog', ok: () => !S.dog && !S.seenEvents.dog, run: f => modal({ title: 'A puppy needs a home', body: 'A neighbor’s dog had puppies. One keeps following Dave around.', choices: [
+      { label: `Adopt him (${money(400 * f)} + ${money(90 * f)}/month)`, sub: 'Happiness goes up every day', fn: () => { spend('Puppy', 400 * f); S.dog = true; feed('Dave adopted a dog named Biscuit.', 'good'); } },
+      { label: 'Not right now' } ] }) },
+    { id: 'ticket', ok: () => S.car, run: f => { const c = 175 * f; spend('Speeding ticket', c); feed(`Dave got a speeding ticket: ${money(c)}.`, 'bad'); fx('-' + money(c), 'work', 'bad'); } },
+    { id: 'found', ok: () => true, run: () => { S.cash += 20; addInc('Found money', 20); feed('Dave found a $20 bill on the sidewalk.', 'good'); fx('+$20', 'home', 'gold'); } },
+    { id: 'startup', ok: () => S.cash > 2000 * fNow(), run: f => modal({ title: 'A friend’s startup', body: 'His friend Kyle is starting a company that delivers socks by drone. He wants investors.', choices: [
+      { label: `Invest ${money(1000 * f)}`, sub: 'Most startups fail.', fn: () => { spend('Kyle’s startup', 1000 * f); S.kyle = { amt: 1000 * f, day: S.day + 365 + Math.floor(rnd() * 365) }; } },
+      { label: 'Pass' } ] }) },
+    { id: 'roommate', ok: () => S.housing === 'roommates' && !S.house, run: f => modal({ title: 'A roommate moved out suddenly', body: 'His share of the rent is due this month.', choices: [
+      { label: `Cover it (${money(700 * f)})`, fn: () => spend('Roommate’s rent', 700 * f) },
+      { label: 'Move back to Mom’s', sub: 'Free, but less happy', fn: () => { S.cash += S.deposit; S.deposit = 0; S.housing = 'mom'; } } ] }) },
+  ];
+  function randomEvent() {
+    if (S.kyle && S.day >= S.kyle.day) {
+      const k = S.kyle; S.kyle = null;
+      if (rnd() < 0.12) { const g = k.amt * 12; S.cash += g; addInc('Startup payout', g); SFX.goal(); modal({ title: 'Kyle’s startup got bought!', body: `Drone socks were a hit. Dave’s ${money(k.amt)} turned into ${money(g)}.`, choices: [{ label: 'Wow' }] }); }
+      else feed('Kyle’s drone sock startup shut down. Dave’s investment is gone.', 'bad');
+      return;
+    }
+    const pool = EVENTS.filter(e => e.ok() && e.id !== S.lastEvent);
+    const e = pick(pool); if (!e) return;
+    S.seenEvents[e.id] = true; S.lastEvent = e.id;
+    e.run(fNow());
+  }
+
+  // ================= Goals / end =================
+  function checkGoals() {
+    for (const [id, name, test] of GOALS) {
+      if (!S.goals.includes(id) && test()) {
+        S.goals.push(id); S.happy = clamp(S.happy + 5, 0, 100);
+        SFX.goal(); toast('Goal complete: ' + name); feed('Goal complete: <b>' + name + '</b>', 'good'); fx('Goal!', 'home', 'gold');
+      }
+    }
+  }
+  function finish(reason) {
+    if (S.over) return;
+    const nw = netWorth(), adj = nw * CPI_LATEST / mval('cpi', today());
+    S.over = { reason, nw, adj };
+    let scores = [];
+    try { scores = JSON.parse(localStorage.getItem(SCORES) || '[]'); } catch (e) {}
+    scores.push({ era: S.era, nw: Math.round(nw), adj: Math.round(adj), reason, at: Date.now() });
+    scores.sort((a, b) => b.adj - a.adj);
+    try { localStorage.setItem(SCORES, JSON.stringify(scores.slice(0, 10))); } catch (e) {}
+    save();
+    const grade = reason === 'bankrupt' ? 'Bankrupt' : nw >= 1e6 ? 'Millionaire' : nw >= 3e5 ? 'Wealthy' : nw >= 1e5 ? 'Comfortable' : nw >= 2e4 ? 'Getting ahead' : nw >= 0 ? 'Scraping by' : 'In debt';
+    const rows = [
+      ['Final net worth', money(nw)], ['In today’s dollars', money(adj)], ['Age', age()],
+      ['Total earned', money(S.totals.earned)], ['Taxes paid', money(S.totals.taxes)], ['Interest paid', money(S.totals.interest)],
+      ['Job', S.job ? job().name : 'None'], ['Goals', `${S.goals.length} of ${GOALS.length}`],
+    ];
+    if (reason === 'time') SFX.goal(); else SFX.bad();
+    modal({
+      kicker: reason === 'bankrupt' ? 'Game over' : 'Ten years later · ' + fmtDate(today()),
+      title: reason === 'bankrupt' ? 'Dave went bankrupt' : `Dave finished as: ${grade}`,
+      body: reason === 'bankrupt' ? 'His credit card stayed over the limit for three months. The bank sent his debt to collections.' : `Dave is ${age()}. Here’s how his ten years went.`,
+      html: `<div class="kv">${rows.map(r => `<div><span>${r[0]}</span><b>${r[1]}</b></div>`).join('')}</div><canvas class="chart" id="endChart"></canvas>`,
+      after: () => drawChart($('endChart'), S.hist.map(h => [h[0], h[1]]), { money: true }),
+      choices: [{ label: 'Play again', fn: () => { try { localStorage.removeItem(SAVE); } catch (e) {} showStart(); } }],
+    });
+  }
+
+  // ================= Player actions =================
+  const ACT = {
+    routine: a => { if (a === 'study' && !(S.course && S.course.mode === 'part')) { toast('Enroll part-time in the School tab first.'); return; } S.routine = a; },
+    style: a => { S.style = a; },
+    move: a => {
+      const H = HOUSING[a], f = fNow();
+      if (a !== 'mom') {
+        const need = 36 * H.rent * f;
+        if (annualWage() < need && S.cash + S.savings < H.rent * f * 12) { toast(`Landlords want income of ${money(need)}/yr (3x rent) or a year of rent saved.`); return; }
+        const upfront = H.rent * f + 400 * f;
+        if (S.cash < upfront) { toast(`Moving needs ${money(upfront)} cash: deposit plus movers.`); return; }
+        S.cash += S.deposit; S.deposit = H.rent * f; S.cash -= upfront; addExp('Moving costs', 400 * f);
+      } else { S.cash += S.deposit; S.deposit = 0; }
+      S.housing = a; SFX.cash(); feed(`Dave moved to: ${H.name}.`, 'good');
+    },
+    buyHouse: down => {
+      const d = today(), f = infl(d), price = medianHome(d), dp = price * down, closing = price * 0.03, rate = mortgageRate(d);
+      const loan = price - dp, r = rate / 1200, pmt = loan * r / (1 - Math.pow(1 + r, -360));
+      const pmi = down < 0.2 ? (down < 0.05 ? 0.85 : 0.6) : 0;
+      const monthly = pmt + price * 0.011 / 12 + 90 * f + loan * pmi / 1200;
+      if (S.cash < dp + closing) { toast(`Needs ${money(dp + closing)} cash for the down payment and closing costs.`); return; }
+      if (!S.job || S.day - S.job.start < 180) { toast('Lenders want 6 months at a job first.'); return; }
+      if (monthly > annualWage() / 12 * 0.31) { toast(`Denied: the ${money(monthly)}/mo payment is over 31% of Dave’s income.`); return; }
+      S.cash -= dp + closing; addExp('House down payment & closing', dp + closing);
+      S.cash += S.deposit; S.deposit = 0;
+      S.house = { price, idx0: mval('house', d), loan, rate, pmt, pmi, day: S.day };
+      SFX.goal(); feed(`Dave bought a house for ${money(price)} with a ${rate.toFixed(2)}% mortgage.`, 'good'); fx('New house!', 'home', 'gold');
+    },
+    sellHouse: () => {
+      const v = houseValue(), got = v * 0.94 - S.house.loan;
+      S.cash += got; cover(); feed(`Dave sold his house for ${money(v)} and walked away with ${money(got)} after fees and the loan.`, got > 0 ? 'good' : 'bad');
+      S.house = null; S.housing = 'mom';
+    },
+    buyCar: a => {
+      const [kind, how] = a.split(':'), C = CARS[kind], f = fNow(), price = C.price * f;
+      if (how === 'cash') { if (S.cash < price) { toast(`Needs ${money(price)} cash.`); return; } S.cash -= price; addExp('Car', price); S.car = { kind, value: price, loan: 0, rate: 0, pmt: 0 }; }
+      else {
+        if (!S.job) { toast('Car loans need a job.'); return; }
+        const dp = price * 0.1; if (S.cash < dp) { toast(`Needs ${money(dp)} for the down payment.`); return; }
+        const loan = price - dp, r = C.rate / 1200, pmt = loan * r / (1 - Math.pow(1 + r, -60));
+        S.cash -= dp; addExp('Car down payment', dp); S.car = { kind, value: price, loan, rate: C.rate, pmt };
+      }
+      SFX.cash(); feed(`Dave bought a ${C.name.toLowerCase()}.`, 'good');
+    },
+    sellCar: () => {
+      const got = S.car.value * 0.9 - S.car.loan; S.cash += got; cover();
+      feed(`Dave sold his car${got >= 0 ? ` and got ${money(got)}` : ` but still owed ${money(-got)}`}.`, 'money');
+      S.car = null;
+      if (job() && job().req.length && job().req.every(r => r.car)) loseJob('He can’t do deliveries without a car.');
+    },
+    insure: a => { S.insured = a === 'on'; },
+    apply: id => {
+      const J = JOB[id], f = fNow();
+      if (!qualifies(J) || (S.cooldown[id] || 0) > S.day) return;
+      const vix = dval('vix', today());
+      const chance = clamp(0.72 + 0.04 * expMonths(J.field) / 12 - (vix > 30 ? 0.25 : 0) - (J.wage > 40 ? 0.15 : 0), 0.15, 0.95);
+      if (rnd() < chance) {
+        const exp = Math.min(5, expMonths(J.field) / 12);
+        S.job = { id, wage: J.wage * f * (1 + 0.03 * exp), part: false, start: S.day, review: S.day };
+        S.perf = 50; S.unemp = null;
+        SFX.goal(); fx('Hired!', 'work', 'gold');
+        modal({ kicker: 'Job offer', title: `Dave got the job: ${J.name}!`, body: `${money(S.job.wage, true)}/hr, about ${money(annualWage())} a year before taxes${J.benefits ? ', with health insurance' : ''}. He works weekday days at ${PLACES[J.place]}.`, choices: [{ label: 'Start working' }] });
+      } else {
+        S.cooldown[id] = S.day + 14; SFX.bad(); toast(`${J.name}: they picked someone else. Try again in two weeks.`);
+      }
+    },
+    quit: () => { const J = job(); feed(`Dave quit his job at ${PLACES[J.place]}.`, 'money'); S.job = null; S.unemp = null; },
+    hours: () => { const J = job(); if (!S.job.part && !J.partOk) return; S.job.part = !S.job.part; feed(`Dave switched to ${S.job.part ? 'part-time' : 'full-time'}.`, 'money'); },
+    enroll: a => {
+      const [id, mode, pay] = a.split(':'), C = COURSE[id];
+      if (mode === 'full' && S.job && !S.job.part) { toast('Full-time school needs a part-time job or no job.'); return; }
+      const half = C.uni && S.edu.includes('assoc');
+      const units = half ? C.units / 2 : C.units, cost = half ? C.cost / 2 : C.cost;
+      S.course = { id, mode, loan: pay === 'loan', units, done: 0, perUnit: cost / units };
+      if (mode === 'part') S.routine = 'study';
+      SFX.goal(); feed(`Dave enrolled in ${C.name} (${mode}-time).`, 'good');
+    },
+    drop: () => { feed(`Dave dropped out of ${COURSE[S.course.id].name}.`, 'bad'); S.course = null; if (S.routine === 'study') S.routine = 'rest'; },
+    toSav: a => { const amt = a === 'all' ? Math.max(0, S.cash - 300 * fNow()) : Math.min(S.cash, +a); S.cash -= amt; S.savings += amt; },
+    fromSav: a => { const amt = a === 'all' ? S.savings : Math.min(S.savings, +a); S.savings -= amt; S.cash += amt; },
+    payCard: a => { const amt = Math.min(S.cash, S.card, a === 'all' ? Infinity : +a); S.cash -= amt; S.card -= amt; if (S.card < 0.01) S.card = 0; },
+    payLoan: () => { const amt = Math.min(S.cash, S.studentLoan); S.cash -= amt; S.studentLoan -= amt; },
+    sel: k => { investSel = k; },
+    buy: a => {
+      const k = investSel, p = k === 'bond' ? 1 : assetPrice(k);
+      if (k !== 'bond' && p <= 0) { toast('Oil is below $0 today. Trading is frozen.'); return; }
+      const amt = a === 'half' ? S.cash / 2 : Math.min(S.cash, +a);
+      if (amt < 1) return;
+      S.cash -= amt; S.invested = true;
+      if (k === 'bond') { const y = bondYield(today()); S.bondRate = (S.bondRate * S.bonds + y * amt) / (S.bonds + amt); S.bonds += amt; }
+      else { S.hold[k] += amt / p; S.basis[k] += amt; }
+      SFX.click(); toast(`Bought ${money(amt)} of ${k === 'bond' ? 'Treasury bonds' : ASSETS[k].name}`);
+    },
+    sell: a => {
+      const k = investSel, frac = +a;
+      if (k === 'bond') { const amt = S.bonds * frac; S.bonds -= amt; S.cash += amt; if (S.bonds < 1) { S.bonds = 0; S.bondRate = 0; } return; }
+      const p = assetPrice(k); if (p <= 0) { toast('Oil is below $0 today. Trading is frozen.'); return; }
+      const units = S.hold[k] * frac; if (!units) return;
+      const proceeds = units * p, cost = S.basis[k] * frac, gain = proceeds - cost, tax = gain > 0 ? gain * 0.15 : 0;
+      S.hold[k] -= units; S.basis[k] -= cost; S.cash += proceeds - tax;
+      if (tax) { addExp('Capital gains tax', tax); S.totals.taxes += tax; }
+      if (gain > 0) addInc('Investment gains', gain);
+      SFX.cash(); toast(`Sold for ${money(proceeds)} (${gain >= 0 ? 'gain' : 'loss'} ${money(Math.abs(gain))}${tax ? `, tax ${money(tax)}` : ''})`);
+    },
+  };
+
+  // ================= Panels =================
+  function opt(act, arg, title, sub, on, disabled) {
+    return `<button class="opt" data-act="${act}" data-arg="${arg}" aria-pressed="${on ? 'true' : 'false'}" ${disabled ? 'disabled' : ''}><b>${title}</b><span>${sub}</span></button>`;
+  }
+  function panelLife() {
+    const f = fNow(), d = today();
+    let h = `<h3>Free time (evenings &amp; weekends)</h3><div class="opts">${Object.entries(ROUTINES).map(([k, r]) => opt('routine', k, r.name, r.desc, S.routine === k, k === 'study' && !(S.course && S.course.mode === 'part'))).join('')}</div>`;
+    h += `<h3>Spending style</h3><div class="opts">${Object.entries(STYLES).map(([k, s]) => opt('style', k, `${s.name} · ${money(s.fun * f)}/mo`, s.desc, S.style === k)).join('')}</div>`;
+    h += `<h3>Where Dave lives</h3><div class="tbl-wrap"><table><tr><th>Home</th><th class="r">Rent / mo</th><th></th></tr>`;
+    for (const [k, H] of Object.entries(HOUSING)) {
+      const cur = !S.house && S.housing === k;
+      h += `<tr class="${cur ? 'cur' : ''}"><td>${H.name}${k === 'mom' ? (age() >= 23 ? ' <span class="mutedt">(getting awkward)</span>' : '') : ''}</td><td class="r num">${money(H.rent * f)}</td><td class="r">${cur ? '<b>Living here</b>' : S.house ? '' : `<button class="btn sm" data-act="move" data-arg="${k}">Move</button>`}</td></tr>`;
+    }
+    h += '</table></div>';
+    const price = medianHome(d), rate = mortgageRate(d);
+    if (S.house) {
+      const v = houseValue();
+      h += `<div class="box"><h4>Dave’s house</h4><div class="kv"><div><span>Value now</span><b>${money(v)}</b></div><div><span>Paid</span><b>${money(S.house.price)}</b></div><div><span>Mortgage left</span><b>${money(S.house.loan)}</b></div><div><span>Equity</span><b class="${v - S.house.loan >= 0 ? 'up' : 'down'}">${money(v - S.house.loan)}</b></div><div><span>Rate</span><b>${S.house.rate.toFixed(2)}%</b></div></div>
+        <div class="row-btns"><button class="btn danger sm" data-act="sellHouse" data-arg="">Sell house (6% fees)</button></div></div>`;
+    } else {
+      const pay = d2 => { const loan = price * (1 - d2), r = rate / 1200; return loan * r / (1 - Math.pow(1 + r, -360)); };
+      h += `<div class="box"><h4>Buy a house</h4><p class="note">Typical home price today: <b>${money(price)}</b> (follows the real Case-Shiller US home price index). Mortgage rate about <b>${rate.toFixed(2)}%</b> (real 10-year Treasury + 1.75%). Lenders need 6 months at a job and a payment under 31% of income. Closing costs are 3%.</p>
+        <div class="row-btns">${[0.035, 0.1, 0.2].map(x => `<button class="btn sm" data-act="buyHouse" data-arg="${x}" ${S.cash < price * (x + 0.03) ? 'disabled' : ''}>${x * 100}% down: ${money(price * (x + 0.03))} cash, ~${money(pay(x))}/mo</button>`).join('')}</div></div>`;
+    }
+    h += `<h3>Car</h3>`;
+    if (S.car) {
+      h += `<div class="box"><div class="kv"><div><span>Car</span><b>${CARS[S.car.kind].name}</b></div><div><span>Value</span><b>${money(S.car.value)}</b></div><div><span>Loan left</span><b>${money(S.car.loan)}</b></div><div><span>Gas now</span><b>$${gasPrice(d).toFixed(2)}/gal</b></div></div><div class="row-btns"><button class="btn danger sm" data-act="sellCar" data-arg="">Sell car</button></div></div>`;
+    } else {
+      h += `<p class="note">No car: Dave takes the bus (${money(65 * f)}/mo). A car costs insurance, gas (now $${gasPrice(d).toFixed(2)}/gal, follows real oil prices) and upkeep, but unlocks delivery jobs and better side gigs.</p><div class="row-btns">`;
+      for (const [k, C] of Object.entries(CARS)) {
+        const p = C.price * f;
+        h += `<button class="btn sm" data-act="buyCar" data-arg="${k}:cash" ${S.cash < p ? 'disabled' : ''}>${C.name}: ${money(p)} cash</button><button class="btn sm" data-act="buyCar" data-arg="${k}:loan" ${S.cash < p * 0.1 || !S.job ? 'disabled' : ''}>${C.name}: loan at ${C.rate}%, ${money(p * 0.1)} down</button>`;
+      }
+      h += '</div>';
+    }
+    const workPlan = S.job && job().benefits && !S.job.part;
+    h += `<h3>Health insurance</h3><p class="note">${workPlan ? `Dave is covered by his work plan (${money(120 * f)}/mo).` : 'Without insurance, a doctor visit costs about 5x more and a hospital stay can cost over $12,000.'}</p>`;
+    if (!workPlan) h += `<div class="opts">${opt('insure', 'on', `Buy a plan · ${money(280 * f)}/mo`, 'Covers most of doctor and hospital bills.', S.insured)}${opt('insure', 'off', 'Go without', 'Save money and hope for the best.', !S.insured)}</div>`;
+    if (S.dog) h += '<p class="note">Biscuit the dog is happy to see Dave every day.</p>';
+    return h;
+  }
+  function panelJobs() {
+    const f = fNow();
+    let h = '';
+    if (S.job) {
+      const J = job();
+      h += `<div class="box"><h4>${J.name} at ${PLACES[J.place]}</h4><div class="kv"><div><span>Pay</span><b>${money(S.job.wage, true)}/hr</b></div><div><span>Per year</span><b>${money(annualWage())}</b></div><div><span>Hours</span><b>${S.job.part ? 'Part-time' : 'Full-time'}</b></div><div><span>Next review</span><b>${Math.max(0, 365 - (S.day - S.job.review))} days</b></div><div><span>Benefits</span><b>${J.benefits && !S.job.part ? 'Health plan' : 'None'}</b></div></div>
+        <div class="row-btns">${J.partOk ? `<button class="btn sm" data-act="hours" data-arg="">Switch to ${S.job.part ? 'full-time' : 'part-time'}</button>` : ''}<button class="btn danger sm" data-act="quit" data-arg="">Quit</button></div></div>`;
+    } else {
+      h += `<div class="box"><h4>Dave doesn’t have a job</h4><p class="note">${S.unemp ? `Unemployment pays ${money(S.unemp.weekly)}/week for ${Math.max(0, Math.ceil((S.unemp.until - S.day) / 7))} more weeks.` : 'Apply below. Jobs with no requirements hire fast.'}</p></div>`;
+    }
+    h += `<p class="note">Pay is based on real US median wages for each job in 2016, adjusted for inflation. Experience in a field raises starting pay and unlocks promotions. Hiring is harder when the real VIX fear index is high (it’s ${dval('vix', today()).toFixed(1)} today).</p>`;
+    h += `<div class="tbl-wrap"><table><tr><th>Job</th><th class="r">Pay</th><th>Needs</th><th></th></tr>`;
+    for (const J of JOBS) {
+      const cur = S.job && S.job.id === J.id, ok = qualifies(J), cd = (S.cooldown[J.id] || 0) > S.day;
+      h += `<tr class="${cur ? 'cur' : ''}"><td><b>${J.name}</b><br><span class="mutedt">${PLACES[J.place]}${J.benefits ? ' · health plan' : ''}</span></td><td class="r num">${money(J.wage * f, true)}/hr<br><span class="mutedt">${money(J.wage * f * 2080)}/yr</span></td><td class="req">${reqText(J)}</td><td class="r">${cur ? '<b>Your job</b>' : `<button class="btn sm ${ok ? 'go' : ''}" data-act="apply" data-arg="${J.id}" ${!ok || cd ? 'disabled' : ''}>${cd ? 'Wait' : 'Apply'}</button>`}</td></tr>`;
+    }
+    return h + '</table></div>';
+  }
+  function panelSchool() {
+    const f = fNow();
+    let h = '';
+    if (S.course) {
+      const C = COURSE[S.course.id], p = S.course.done / S.course.units;
+      const rate = S.course.mode === 'full' ? 1 : (S.routine === 'study' ? 0.49 : 0);
+      h += `<div class="box"><h4>${C.name} (${S.course.mode}-time)</h4><div class="bar"><i style="width:${(p * 100).toFixed(1)}%"></i></div>
+        <p class="note">${(p * 100).toFixed(0)}% done. ${rate ? `About ${Math.ceil((S.course.units - S.course.done) / rate / 30)} months to go.` : 'Set free time to Study to make progress.'} Tuition is ${S.course.loan ? 'added to student loans (5% interest)' : 'paid monthly from cash'}.</p>
+        <div class="row-btns"><button class="btn danger sm" data-act="drop" data-arg="">Drop out</button></div></div>`;
+    } else h += `<p class="note">Full-time school takes the daytime, so Dave can only keep a part-time job. Part-time school uses evenings and weekends (free time set to Study) and takes about twice as long. Prices are typical 2016 US tuition, adjusted for inflation.</p>`;
+    h += `<div class="tbl-wrap"><table><tr><th>Program</th><th class="r">Full-time</th><th class="r">Tuition</th><th>Unlocks</th><th></th></tr>`;
+    for (const C of COURSES) {
+      const half = C.uni && S.edu.includes('assoc'), units = half ? C.units / 2 : C.units, cost = (half ? C.cost / 2 : C.cost) * f;
+      const done = S.edu.includes(C.id), dur = units >= 365 ? (units / 365) + ' yrs' : Math.round(units / 30) + ' mo';
+      const fullBlocked = S.job && !S.job.part;
+      h += `<tr class="${done ? 'cur' : ''}"><td><b>${C.name}</b></td><td class="r num">${dur}</td><td class="r num">${money(cost)}</td><td class="req">${C.unlocks}</td><td class="r">${done ? '<b>Done</b>' : S.course ? '' : `<div class="row-btns" style="justify-content:flex-end">
+        <button class="btn sm" data-act="enroll" data-arg="${C.id}:part:cash">Part-time, pay cash</button><button class="btn sm" data-act="enroll" data-arg="${C.id}:part:loan">Part-time, loan</button>
+        <button class="btn sm" data-act="enroll" data-arg="${C.id}:full:cash" ${fullBlocked ? 'disabled' : ''}>Full-time, cash</button><button class="btn sm" data-act="enroll" data-arg="${C.id}:full:loan" ${fullBlocked ? 'disabled' : ''}>Full-time, loan</button></div>`}</td></tr>`;
+    }
+    return h + '</table></div>';
+  }
+  function panelMoney() {
+    const d = today(), f = fNow();
+    let h = `<div class="kv box"><div><span>Checking (cash)</span><b>${money(S.cash)}</b></div><div><span>Savings</span><b>${money(S.savings)}</b></div><div><span>Savings rate</span><b>${savingsApy(d).toFixed(2)}% APY</b></div><div><span>Credit card</span><b class="${S.card > 0 ? 'down' : ''}">${money(S.card)}</b></div><div><span>Card limit</span><b>${money(cardLimit())}</b></div><div><span>Student loans</span><b class="${S.studentLoan > 0 ? 'down' : ''}">${money(S.studentLoan)}</b></div></div>`;
+    h += `<div class="row-btns"><button class="btn sm" data-act="toSav" data-arg="${Math.round(500 * f)}">Save ${money(500 * f)}</button><button class="btn sm" data-act="toSav" data-arg="all">Save all but ${money(300 * f)}</button><button class="btn sm" data-act="fromSav" data-arg="all">Withdraw savings</button>
+      <button class="btn sm" data-act="payCard" data-arg="all" ${S.card > 0 && S.cash > 0 ? '' : 'disabled'}>Pay off card</button><button class="btn sm" data-act="payLoan" data-arg="" ${S.studentLoan > 0 && S.cash > 0 ? '' : 'disabled'}>Pay off student loan</button></div>
+      <p class="note">Savings interest follows real rates (10-year Treasury minus 1%). If cash runs out, bills come out of savings first, then the credit card.</p>`;
+    if (S.last) {
+      const rowsOf = o => Object.entries(o).filter(e => e[1] > 0.5).sort((a, b) => b[1] - a[1]);
+      const inc = rowsOf(S.last.inc), exp = rowsOf(S.last.exp);
+      const ti = inc.reduce((a, b) => a + b[1], 0), te = exp.reduce((a, b) => a + b[1], 0);
+      h += `<h3>Statement for ${S.lastName}</h3><div class="tbl-wrap"><table><tr><th>Money in</th><th class="r">Amount</th></tr>${inc.map(r => `<tr><td>${r[0]}</td><td class="r num up">${money(r[1])}</td></tr>`).join('') || '<tr><td colspan="2" class="mutedt">Nothing</td></tr>'}
+        <tr><th>Money out</th><th class="r"></th></tr>${exp.map(r => `<tr><td>${r[0]}</td><td class="r num down">${money(r[1])}</td></tr>`).join('')}
+        <tr><td><b>Net</b></td><td class="r num ${ti - te >= 0 ? 'up' : 'down'}"><b>${money(ti - te)}</b></td></tr></table></div>`;
+    } else h += '<p class="note">The first monthly statement shows up on the 1st.</p>';
+    h += `<h3>Net worth over time</h3><canvas class="chart" id="nwChart"></canvas>`;
+    return h;
+  }
+  function panelInvest() {
+    const d = today(), prevD = new Date(d.getTime() - 30 * DAY);
+    let h = `<p class="note">Prices are real history: Dave can only see the past, never the future. Selling at a profit costs 15% capital gains tax.</p><div class="assets">`;
+    for (const [k, A] of Object.entries(ASSETS)) {
+      const p = A.get(d), p0 = A.get(prevD), ch = p0 > 0 ? (p / p0 - 1) * 100 : 0, val = S.hold[k] * Math.max(0, p);
+      h += `<button class="asset" data-act="sel" data-arg="${k}" aria-pressed="${investSel === k}"><b>${A.name}</b><span class="num">$${p.toFixed(2)} <small class="${ch >= 0 ? 'up' : 'down'}">${pct(ch)} 30d</small></span><span class="mutedt">You own ${money(val)}</span></button>`;
+    }
+    h += `<button class="asset" data-act="sel" data-arg="bond" aria-pressed="${investSel === 'bond'}"><b>10-year Treasury bonds</b><span class="num">${bondYield(d).toFixed(2)}% yield</span><span class="mutedt">You own ${money(S.bonds)}</span></button></div>`;
+    const k = investSel;
+    if (k === 'bond') {
+      h += `<div class="box"><h4>Treasury bonds</h4><p class="note">Lend money to the US government at the real 10-year Treasury rate on the day you buy. Pays interest monthly. Sell anytime at face value (simplified).</p><div class="kv"><div><span>Owned</span><b>${money(S.bonds)}</b></div><div><span>Your avg. rate</span><b>${S.bondRate.toFixed(2)}%</b></div><div><span>Rate today</span><b>${bondYield(d).toFixed(2)}%</b></div></div>`;
+    } else {
+      const A = ASSETS[k], p = A.get(d), val = S.hold[k] * Math.max(0, p), gain = val - S.basis[k];
+      h += `<div class="box"><h4>${A.name}</h4><p class="note">${A.note}</p><canvas class="chart" id="assetChart"></canvas><div class="kv"><div><span>Price</span><b>$${p.toFixed(2)}/${A.unit}</b></div><div><span>You own</span><b>${S.hold[k].toFixed(3)} ${A.unit}s</b></div><div><span>Value</span><b>${money(val)}</b></div><div><span>Gain</span><b class="${gain >= 0 ? 'up' : 'down'}">${money(gain)}</b></div></div>`;
+    }
+    const f = fNow();
+    h += `<div class="row-btns">${[100, 1000, 10000].map(a => `<button class="btn sm go" data-act="buy" data-arg="${Math.round(a * f)}" ${S.cash < a * f ? 'disabled' : ''}>Buy ${money(a * f)}</button>`).join('')}<button class="btn sm go" data-act="buy" data-arg="half" ${S.cash < 2 ? 'disabled' : ''}>Buy with half your cash</button></div>
+      <div class="row-btns">${[0.25, 0.5, 1].map(x => `<button class="btn sm danger" data-act="sell" data-arg="${x}">Sell ${x === 1 ? 'all' : x * 100 + '%'}</button>`).join('')}</div></div>`;
+    return h;
+  }
+  function panelGoals() {
+    let h = `<p class="note">${S.goals.length} of ${GOALS.length} done. The game ends on ${fmtDate(new Date(S.endMs))}, when Dave is 28. Final score: his net worth.</p><div>`;
+    h += GOALS.map(([id, name]) => `<div class="goal ${S.goals.includes(id) ? 'done' : ''}"><span class="ck">${S.goals.includes(id) ? '[x]' : '[ ]'}</span><b>${name}</b></div>`).join('');
+    return h + '</div>' + scoresHtml();
+  }
+  function scoresHtml() {
+    let s = [];
+    try { s = JSON.parse(localStorage.getItem(SCORES) || '[]'); } catch (e) {}
+    if (!s.length) return '';
+    return `<h3 style="margin-top:12px">Best runs</h3><div class="tbl-wrap"><table><tr><th>Start</th><th class="r">Net worth</th><th class="r">In today’s $</th><th>Result</th></tr>${s.map(r => `<tr><td>${r.era}</td><td class="r num">${money(r.nw)}</td><td class="r num">${money(r.adj)}</td><td>${r.reason === 'bankrupt' ? 'Bankrupt' : 'Finished'}</td></tr>`).join('')}</table></div>`;
+  }
+  const PANELS = { life: panelLife, jobs: panelJobs, school: panelSchool, money: panelMoney, invest: panelInvest, goals: panelGoals };
+  let lastPanelHtml = '', pointerDown = false;
+  function renderPanel(force) {
+    if (!S || (pointerDown && !force)) return;
+    const html = PANELS[tab]();
+    if (html !== lastPanelHtml || force) { $('panel').innerHTML = html; lastPanelHtml = html; }
+    const nc = $('nwChart'); if (nc) drawChart(nc, S.hist.concat([[S.day, netWorth()]]), { money: true });
+    const ac = $('assetChart');
+    if (ac) {
+      const A = ASSETS[investSel], pts = [], from = Math.max(D0, S.startMs - 3 * 365 * DAY), to = today().getTime(), step = A.monthly ? 30 * DAY : 3 * DAY;
+      for (let t = from; t <= to; t += step) pts.push([(t - S.startMs) / DAY, A.get(new Date(t))]);
+      pts.push([S.day, A.get(today())]);
+      drawChart(ac, pts, { price: true, mark: S.startMs });
+    }
+  }
+  function setTab(t) {
+    tab = t;
+    document.querySelectorAll('.tab').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === t ? 'true' : 'false'));
+    try { localStorage.setItem('hustle-dave-tab', t); } catch (e) {}
+    renderPanel(true);
+  }
+
+  // ================= Charts =================
+  function drawChart(c, pts, opt = {}) {
+    if (!c || !c.offsetWidth || pts.length < 2) return;
+    const dpr = Math.min(2, window.devicePixelRatio || 1), w = c.offsetWidth, h = c.offsetHeight;
+    c.width = Math.round(w * dpr); c.height = Math.round(h * dpr);
+    const x = c.getContext('2d'); x.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const cs = getComputedStyle(document.documentElement), col = n => cs.getPropertyValue(n).trim();
+    let lo = Math.min(...pts.map(p => p[1])), hi = Math.max(...pts.map(p => p[1]));
+    if (opt.money) { lo = Math.min(0, lo); hi = Math.max(hi, 1); }
+    if (hi - lo < 1e-6) { hi += 1; lo -= 1; }
+    const pad = (hi - lo) * 0.08; hi += pad; if (!opt.money || lo < 0) lo -= pad;
+    const L = 4, R = 70, T = 8, B = 20;
+    const x0 = pts[0][0], x1 = pts[pts.length - 1][0];
+    const sx = v => L + (v - x0) / Math.max(1, x1 - x0) * (w - L - R), sy = v => T + (1 - (v - lo) / (hi - lo)) * (h - T - B);
+    const lab = v => opt.money ? money(v) : '$' + (v >= 1000 ? Math.round(v).toLocaleString('en-US') : v.toFixed(2));
+    x.font = '11px ' + col('--mono'); x.lineWidth = 1;
+    for (let i = 0; i <= 3; i++) {
+      const v = lo + (hi - lo) * i / 3;
+      x.strokeStyle = col('--line'); x.beginPath(); x.moveTo(L, sy(v)); x.lineTo(w - R, sy(v)); x.stroke();
+      x.fillStyle = col('--muted'); x.fillText(lab(v), w - R + 6, sy(v) + 4);
+    }
+    if (opt.money && lo < 0) { x.strokeStyle = col('--muted'); x.beginPath(); x.moveTo(L, sy(0)); x.lineTo(w - R, sy(0)); x.stroke(); }
+    const yearOf = day => new Date(S.startMs + day * DAY).getUTCFullYear();
+    x.fillStyle = col('--muted');
+    x.fillText(String(yearOf(x0)), L, h - 5);
+    const ly = String(yearOf(x1)); x.fillText(ly, w - R - x.measureText(ly).width, h - 5);
+    if (opt.mark && x0 < 0) {
+      const mx = sx(0); x.setLineDash([3, 3]); x.strokeStyle = col('--gold'); x.beginPath(); x.moveTo(mx, T); x.lineTo(mx, h - B); x.stroke(); x.setLineDash([]);
+      x.fillStyle = col('--gold'); x.fillText('Dave starts', mx + 4, T + 10);
+    }
+    const up = pts[pts.length - 1][1] >= pts[0][1], c1 = col(up ? '--green' : '--red');
+    x.beginPath(); pts.forEach((p, i) => (i ? x.lineTo(sx(p[0]), sy(p[1])) : x.moveTo(sx(p[0]), sy(p[1]))));
+    x.strokeStyle = c1; x.lineWidth = 2; x.stroke();
+    x.lineTo(sx(x1), sy(Math.max(lo, 0 < lo ? lo : 0))); x.lineTo(sx(x0), sy(Math.max(lo, 0 < lo ? lo : 0))); x.closePath();
+    x.globalAlpha = 0.12; x.fillStyle = c1; x.fill(); x.globalAlpha = 1;
+    const lp = pts[pts.length - 1]; x.beginPath(); x.arc(sx(lp[0]), sy(lp[1]), 3.5, 0, 7); x.fillStyle = c1; x.fill();
+  }
+
+  // ================= Scene =================
+  const LOC = { home: 0.1, work: 0.45, school: 0.7, gym: 0.89 };
+  const locX = l => LOC[l] != null ? LOC[l] : 0.5;
+  let frac = 0;
+  function plan() {
+    // What Dave does today, as [start, end, place] windows within the day (0 = midnight).
+    const d = today(), dow = d.getUTCDay(), wk = dow >= 1 && dow <= 5, segs = [];
+    const free = { rest: 'home', gym: 'gym', gig: 'gig', study: 'school' }[S.routine] || 'home';
+    if (wk) {
+      if (S.course && S.course.mode === 'full') segs.push([0.33, 0.58, 'school']);
+      if (S.job && S.sick <= 0 && S.burnout <= 0) {
+        if (S.course && S.course.mode === 'full') segs.push([0.62, 0.78, 'work']);
+        else segs.push([0.33, S.job.part ? 0.5 : 0.7, 'work']);
+      }
+      if (free !== 'home' && S.sick <= 0 && !(S.course && S.course.mode === 'full' && S.job)) segs.push([0.76, 0.9, free]);
+    } else if (free !== 'home' && S.sick <= 0) segs.push([0.4, 0.75, free]);
+    return segs;
+  }
+  function daveState(t) {
+    const segs = plan(), travel = 0.035;
+    for (const [a, b, p] of segs) {
+      const px = p === 'gig' ? 0.6 : locX(p);
+      if (t >= a && t < b) return { at: p, x: p === 'gig' ? 0.2 + 0.7 * (0.5 + 0.5 * Math.sin((t - a) * 40)) : px, moving: p === 'gig' };
+      if (t >= a - travel && t < a) { const k = (t - (a - travel)) / travel; return { at: 'commute', x: LOC.home + (px - LOC.home) * k, moving: true, dir: 1 }; }
+      if (t >= b && t < b + travel) { const k = (t - b) / travel; return { at: 'commute', x: px + (LOC.home - px) * k, moving: true, dir: -1 }; }
+    }
+    return { at: 'home', x: LOC.home, moving: false };
+  }
+  function doingText(st, t) {
+    const hr = t * 24;
+    if (S.over) return 'The ten years are over.';
+    if (st.at === 'home') {
+      if (hr < 6.5 || hr >= 22.5) return 'Dave is asleep.';
+      if (S.sick > 0) return 'Dave is home sick.';
+      if (S.burnout > 0) return 'Dave is taking time off to recover from burnout.';
+      if (!S.job && !(S.course && S.course.mode === 'full')) return today().getUTCDay() % 6 === 0 ? 'Dave is relaxing at home.' : 'Dave is at home. He needs a job: open the Jobs tab.';
+      return 'Dave is relaxing at home.';
+    }
+    if (st.at === 'commute') return S.car ? 'Dave is driving.' : 'Dave is walking to the bus.';
+    if (st.at === 'work') return `Dave is working at ${PLACES[job().place]}. Click Work hard!`;
+    if (st.at === 'school') return `Dave is in class: ${COURSE[S.course.id].name}.`;
+    if (st.at === 'gym') return 'Dave is at the gym.';
+    if (st.at === 'gig') return S.car ? 'Dave is driving for a rideshare app.' : 'Dave is doing odd jobs around the neighborhood.';
+    return '';
+  }
+  const lerp = (a, b, k) => a + (b - a) * k;
+  function mix(c1, c2, k) { return `rgb(${[0, 1, 2].map(i => Math.round(lerp(c1[i], c2[i], k))).join(',')})`; }
+  function skyColors(t) {
+    const hr = t * 24;
+    const N = [[14, 22, 44], [30, 42, 78]], DAWN = [[245, 160, 110], [120, 150, 200]], DAYC = [[120, 190, 235], [190, 225, 245]], DUSK = [[235, 120, 80], [90, 90, 150]];
+    const seg = (a, b, k) => [mix(a[0], b[0], k), mix(a[1], b[1], k)];
+    if (hr < 5) return seg(N, N, 0);
+    if (hr < 6.5) return seg(N, DAWN, (hr - 5) / 1.5);
+    if (hr < 8) return seg(DAWN, DAYC, (hr - 6.5) / 1.5);
+    if (hr < 18) return seg(DAYC, DAYC, 0);
+    if (hr < 19.5) return seg(DAYC, DUSK, (hr - 18) / 1.5);
+    if (hr < 21) return seg(DUSK, N, (hr - 19.5) / 1.5);
+    return seg(N, N, 0);
+  }
+  const darkness = t => { const hr = t * 24; if (hr < 5 || hr > 21) return 1; if (hr < 8) return clamp((8 - hr) / 3, 0, 1); if (hr > 18) return clamp((hr - 18) / 3, 0, 1); return 0; };
+  const seeded = n => { const v = Math.sin(n * 12.9898 + 78.233) * 43758.5453; return v - Math.floor(v); };
+  let windows = [];
+  function rect(x, c, a, b, w, h) { x.fillStyle = c; x.fillRect(a, b, w, h); }
+  function bldg(x, cx, gy, w, h, body, opts = {}) {
+    const l = cx - w / 2;
+    rect(x, body, l, gy - h, w, h);
+    if (opts.roof) { x.fillStyle = opts.roof; x.beginPath(); x.moveTo(l - 6, gy - h); x.lineTo(cx, gy - h - opts.roofH); x.lineTo(l + w + 6, gy - h); x.fill(); }
+    const cols = opts.cols || Math.max(2, Math.floor(w / 16)), rows = opts.rows || Math.max(1, Math.floor((h - 22) / 18));
+    const ww = opts.ww || 8, wh = opts.wh || 9, gx = (w - cols * ww) / (cols + 1), gyy = (h - 22 - rows * wh) / (rows + 1);
+    for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+      const wx = l + gx + c * (ww + gx), wy = gy - h + 6 + gyy + r * (wh + gyy);
+      rect(x, opts.win || 'rgba(170,205,230,.85)', wx, wy, ww, wh);
+      windows.push([wx, wy, ww, wh, opts.lit != null ? opts.lit : 0.5, r * 7 + c]);
+    }
+    if (opts.door !== false) rect(x, opts.doorC || '#4a3a30', cx - 5, gy - 16, 10, 16);
+    if (opts.sign) {
+      x.font = 'bold 10px ' + 'Libre Franklin, Arial, sans-serif';
+      const tw = x.measureText(opts.sign).width + 10;
+      rect(x, opts.signBg || '#c8452f', cx - tw / 2, gy - h - (opts.roof ? 0 : 0) + 3, tw, 14);
+      x.fillStyle = opts.signFg || '#fff'; x.fillText(opts.sign, cx - tw / 2 + 5, gy - h + 14);
+    }
+  }
+  function drawHome(x, cx, gy) {
+    if (S.house) { bldg(x, cx, gy, 92, 54, '#d9c7a7', { roof: '#7a3b2e', roofH: 26, rows: 1, cols: 3, ww: 12, wh: 12, lit: 1 }); rect(x, '#fff', cx - 70, gy - 12, 22, 2); rect(x, '#fff', cx + 48, gy - 12, 22, 2); return 54 + 26; }
+    if (S.housing === 'mom') { bldg(x, cx, gy, 70, 44, '#b9a48a', { roof: '#5b4636', roofH: 22, rows: 1, cols: 2, ww: 11, wh: 11, lit: 1 }); return 66; }
+    if (S.housing === 'roommates') { bldg(x, cx, gy, 72, 92, '#a8705a', { rows: 4, cols: 4, lit: 0.6 }); return 92; }
+    if (S.housing === 'studio') { bldg(x, cx, gy, 62, 122, '#7d8794', { rows: 6, cols: 3, lit: 0.6 }); return 122; }
+    bldg(x, cx, gy, 70, 138, '#5d6f7f', { rows: 7, cols: 3, lit: 0.6, win: 'rgba(190,220,240,.9)' }); return 138;
+  }
+  function drawWork(x, cx, gy) {
+    const J = job(), p = J ? J.place : null;
+    if (!p) { bldg(x, cx, gy, 84, 50, '#9aa3a0', { sign: 'JOB CENTER', signBg: '#2f5f8a', rows: 1, cols: 3, lit: 0 }); return 'Job Center'; }
+    if (p === 'burger') bldg(x, cx, gy, 88, 52, '#e9d8b4', { sign: 'BURGER BARN', rows: 1, cols: 3, ww: 16, wh: 14, lit: 0.9 });
+    else if (p === 'grocery') { bldg(x, cx, gy, 110, 58, '#dfe6da', { sign: 'FRESHMART', signBg: '#2c6a47', rows: 1, cols: 4, ww: 18, wh: 14, lit: 0.9 }); }
+    else if (p === 'warehouse' || p === 'depot') { bldg(x, cx, gy, 118, 66, '#8c949b', { sign: p === 'depot' ? 'INTERSTATE FREIGHT' : 'SHIPFAST', signBg: '#d9822b', rows: 1, cols: 5, ww: 8, wh: 6, door: false, lit: 0.3 }); rect(x, '#5c646b', cx - 22, gy - 34, 44, 34); for (let i = 0; i < 6; i++) rect(x, '#6f777e', cx - 22, gy - 34 + i * 6, 44, 2); }
+    else if (p === 'office') bldg(x, cx, gy, 76, 160, '#4d6b86', { rows: 9, cols: 4, win: 'rgba(160,210,240,.9)', lit: 0.7, sign: 'MIDTOWN', signBg: '#20303f' });
+    else if (p === 'hospital') { bldg(x, cx, gy, 108, 112, '#eef0ee', { rows: 5, cols: 6, lit: 0.95, win: 'rgba(150,200,225,.9)' }); rect(x, '#d33', cx - 4, gy - 108, 8, 22); rect(x, '#d33', cx - 11, gy - 101, 22, 8); }
+    else if (p === 'site') {
+      bldg(x, cx, gy, 90, 96, '#a39c8e', { rows: 4, cols: 4, win: 'rgba(60,60,60,.6)', lit: 0, door: false });
+      x.strokeStyle = '#e0b020'; x.lineWidth = 3; x.beginPath(); x.moveTo(cx + 40, gy); x.lineTo(cx + 40, gy - 150); x.lineTo(cx - 40, gy - 150); x.stroke();
+      x.lineWidth = 1; x.beginPath(); x.moveTo(cx - 30, gy - 150); x.lineTo(cx - 30, gy - 112); x.stroke(); rect(x, '#555', cx - 36, gy - 112, 12, 8);
+    }
+    return PLACES[p];
+  }
+  function drawDave(x, px, gy, moving, tms, dir) {
+    const J = job();
+    const shirt = !J ? '#4f7db8' : { burger: '#c8452f', grocery: '#2c6a47', warehouse: '#e07b2a', depot: '#3c5a7a', office: '#f2f2ee', hospital: '#3fa69a', site: '#e0b020' }[J.place];
+    const legA = moving ? Math.sin(tms / 90) * 4 : 0;
+    x.strokeStyle = '#2b3446'; x.lineWidth = 4; x.lineCap = 'round';
+    x.beginPath(); x.moveTo(px - 3, gy - 14); x.lineTo(px - 3 + legA, gy - 2); x.moveTo(px + 3, gy - 14); x.lineTo(px + 3 - legA, gy - 2); x.stroke();
+    rect(x, shirt, px - 7, gy - 30, 14, 17);
+    if (J && J.place === 'office') { rect(x, '#b33a2c', px - 1, gy - 29, 2, 10); }
+    x.lineWidth = 3; x.strokeStyle = shirt; x.beginPath(); x.moveTo(px - 7, gy - 28); x.lineTo(px - 10, gy - 17 + (moving ? -legA / 2 : 0)); x.moveTo(px + 7, gy - 28); x.lineTo(px + 10, gy - 17 + (moving ? legA / 2 : 0)); x.stroke();
+    x.fillStyle = '#e2b48c'; x.beginPath(); x.arc(px, gy - 37, 7, 0, 7); x.fill();
+    x.fillStyle = '#3b2a1f'; x.beginPath(); x.arc(px, gy - 39, 7, Math.PI, 0); x.fill();
+    if (J && J.place === 'site') { x.fillStyle = '#f1c40f'; x.beginPath(); x.arc(px, gy - 40, 8, Math.PI, 0); x.fill(); }
+    else if (J && J.place === 'burger') rect(x, '#c8452f', px - 8, gy - 45, 16, 4);
+    x.fillStyle = '#15171a'; x.fillRect(px + (dir < 0 ? -4 : 2), gy - 38, 2, 2);
+    if (S.dog) {
+      const dx = px - 16 * (dir || 1), dy = gy - 2, bob = moving ? Math.abs(Math.sin(tms / 80)) * 2 : 0;
+      rect(x, '#a8743f', dx - 7, dy - 9 - bob, 14, 7); rect(x, '#a8743f', dx + (dir < 0 ? -10 : 5), dy - 13 - bob, 6, 6);
+      rect(x, '#7a512a', dx - 6, dy - 3, 2, 3); rect(x, '#7a512a', dx + 4, dy - 3, 2, 3);
+    }
+  }
+  function drawCar(x, px, gy, dir) {
+    const c = S.car.kind === 'new' ? '#2f6fb0' : '#9b3b2f', y = gy + 18;
+    rect(x, c, px - 22, y - 12, 44, 11); rect(x, c, px - 12, y - 21, 26, 10); rect(x, 'rgba(180,220,240,.9)', px - 9 + (dir < 0 ? -2 : 2), y - 19, 20, 7);
+    x.fillStyle = '#111'; x.beginPath(); x.arc(px - 13, y, 5, 0, 7); x.arc(px + 13, y, 5, 0, 7); x.fill();
+  }
+  function drawScene(tms) {
+    const c = $('scene'), w = c.clientWidth, h = c.clientHeight;
+    if (!w) return;
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    if (c.width !== Math.round(w * dpr) || c.height !== Math.round(h * dpr)) { c.width = Math.round(w * dpr); c.height = Math.round(h * dpr); }
+    const x = c.getContext('2d'); x.setTransform(dpr, 0, 0, dpr, 0, 0);
+    if (!S) { rect(x, '#8ecae6', 0, 0, w, h); return; }
+    const t = frac, d = today(), mon = d.getUTCMonth(), winter = mon === 11 || mon <= 1, fall = mon >= 8 && mon <= 10;
+    const rainy = !winter && seeded(S.day * 3.1) < 0.14, dark = darkness(t);
+    const [top, bot] = skyColors(t);
+    const g = x.createLinearGradient(0, 0, 0, h); g.addColorStop(0, top); g.addColorStop(1, bot); x.fillStyle = g; x.fillRect(0, 0, w, h);
+    if (dark > 0.4) for (let i = 0; i < 60; i++) { x.fillStyle = `rgba(255,255,255,${(dark - 0.4) * seeded(i)})`; x.fillRect(seeded(i + 1) * w, seeded(i + 2) * h * 0.55, 1.5, 1.5); }
+    // Sun and moon
+    const hr = t * 24;
+    if (hr > 6 && hr < 20) { const k = (hr - 6) / 14, sx = k * w, sy = h * 0.7 - Math.sin(k * Math.PI) * h * 0.6; x.fillStyle = rainy ? 'rgba(255,240,200,.35)' : '#ffd86b'; x.beginPath(); x.arc(sx, sy, 16, 0, 7); x.fill(); }
+    else { const k = ((hr + 4) % 24) / 10, mx = k * w, my = h * 0.6 - Math.sin(k * Math.PI) * h * 0.45; x.fillStyle = '#f4f1de'; x.beginPath(); x.arc(mx, my, 11, 0, 7); x.fill(); }
+    // Clouds
+    for (let i = 0; i < 4; i++) {
+      const cx = ((seeded(i + 9) * w + tms * 0.006 * (i + 1)) % (w + 120)) - 60, cy = 20 + seeded(i + 4) * 50;
+      x.fillStyle = rainy ? 'rgba(110,115,125,.85)' : `rgba(255,255,255,${0.75 - dark * 0.55})`;
+      x.beginPath(); x.arc(cx, cy, 14, 0, 7); x.arc(cx + 16, cy - 6, 18, 0, 7); x.arc(cx + 34, cy, 13, 0, 7); x.fill();
+    }
+    const gy = h - 48;
+    // Skyline
+    for (let i = 0; i < 18; i++) { const bw = 30 + seeded(i) * 40, bh = 40 + seeded(i + 30) * 90, bx = i * (w / 17) - 10; rect(x, mix([150, 165, 185], [40, 50, 70], dark), bx, gy - bh, bw, bh); }
+    windows = [];
+    // Trees
+    const leaf = winter ? null : fall ? ['#d9822b', '#c8452f', '#e0b020'] : ['#3d8b4f', '#4f9d5c', '#2f7a42'];
+    [0.22, 0.34, 0.58, 0.8, 0.97].forEach((k, i) => {
+      const tx = k * w; rect(x, '#5b4232', tx - 2, gy - 26, 4, 26);
+      x.fillStyle = leaf ? leaf[i % 3] : 'rgba(110,90,75,.9)'; x.beginPath(); x.arc(tx, gy - 32, leaf ? 13 : 9, 0, 7); x.fill();
+      if (winter) { x.fillStyle = '#f4f6f8'; x.beginPath(); x.arc(tx, gy - 37, 8, Math.PI, 0); x.fill(); }
+    });
+    // Buildings
+    const homeX = LOC.home * w, workX = LOC.work * w;
+    drawHome(x, homeX, gy);
+    const workName = drawWork(x, workX, gy);
+    if (S.course) bldg(x, LOC.school * w, gy, 96, 74, '#9e5b45', { sign: S.course.id === 'cdl' ? 'CDL SCHOOL' : S.course.id === 'bootcamp' ? 'CODE CAMP' : S.course.id === 'trade' ? 'TRADE SCHOOL' : 'COLLEGE', signBg: '#20303f', rows: 2, cols: 5, lit: 0.4 });
+    if (S.routine === 'gym') bldg(x, LOC.gym * w, gy, 64, 50, '#3a4458', { sign: 'GYM', signBg: '#e0b020', signFg: '#111', rows: 1, cols: 3, lit: 0.8 });
+    // Ground
+    rect(x, winter ? '#e8edf0' : '#b9b3a6', 0, gy, w, 10);
+    rect(x, '#3b3f45', 0, gy + 10, w, h - gy - 10);
+    for (let i = 0; i < w; i += 40) rect(x, '#e7d36b', i + ((tms * 0) % 40), gy + 27, 20, 3);
+    // Street lights
+    for (let i = 0; i < 4; i++) { const lx = (i + 0.5) * w / 4 + 30; rect(x, '#2a2e33', lx, gy - 60, 3, 60); rect(x, '#2a2e33', lx - 8, gy - 60, 14, 3); }
+    // Dave
+    const st = daveState(t), px = st.x * w;
+    const showDave = st.at === 'commute' || st.at === 'gig';
+    if (showDave && S.car) drawCar(x, px, gy, st.dir || 1);
+    else if (showDave) drawDave(x, px, gy + 6, st.moving, tms, st.dir || 1);
+    else if (st.at === 'home' && hr > 8 && hr < 20 && S.sick <= 0 && (today().getUTCDay() % 6 === 0 || !S.job)) drawDave(x, px + 50, gy + 6, false, tms, 1);
+    // Night overlay, then lit windows
+    if (dark > 0) {
+      x.fillStyle = `rgba(8,14,34,${dark * 0.5})`; x.fillRect(0, 0, w, h);
+      windows.forEach(([wx, wy, ww, wh, lit, n]) => { if (seeded(n + S.day % 5) < lit) { x.fillStyle = `rgba(255,214,120,${dark * 0.95})`; x.fillRect(wx, wy, ww, wh); } });
+      for (let i = 0; i < 4; i++) { const lx = (i + 0.5) * w / 4 + 30; const rg = x.createRadialGradient(lx - 2, gy - 56, 2, lx - 2, gy - 56, 46); rg.addColorStop(0, `rgba(255,220,140,${dark * 0.6})`); rg.addColorStop(1, 'rgba(255,220,140,0)'); x.fillStyle = rg; x.fillRect(lx - 50, gy - 106, 100, 100); }
+    }
+    // Highlight where Dave is inside
+    if (st.at === 'work' || st.at === 'school' || st.at === 'gym') {
+      const bx = locX(st.at) * w, by = gy - 8;
+      x.fillStyle = '#ffe08a'; x.beginPath(); x.moveTo(bx - 7, by - 8); x.lineTo(bx + 7, by - 8); x.lineTo(bx, by + 1); x.fill();
+    }
+    // Weather
+    if (winter) { x.fillStyle = 'rgba(255,255,255,.85)'; for (let i = 0; i < 70; i++) { const fx2 = (seeded(i) * w + Math.sin(tms / 900 + i) * 10) % w, fy = (seeded(i + 50) * h + tms * 0.03 * (0.6 + seeded(i + 7))) % h; x.fillRect(fx2, fy, 2, 2); } }
+    else if (rainy) { x.strokeStyle = 'rgba(200,215,235,.55)'; x.lineWidth = 1; x.beginPath(); for (let i = 0; i < 90; i++) { const rx = (seeded(i) * w + tms * 0.05) % w, ry = (seeded(i + 99) * h + tms * 0.5) % h; x.moveTo(rx, ry); x.lineTo(rx - 3, ry + 10); } x.stroke(); }
+    // Labels
+    x.font = '600 11px Libre Franklin, Arial, sans-serif'; x.fillStyle = 'rgba(255,255,255,.95)'; x.textAlign = 'center';
+    const tag = (s, cx2) => { const tw = x.measureText(s).width + 10; x.fillStyle = 'rgba(12,18,14,.7)'; x.fillRect(cx2 - tw / 2, gy + 12, tw, 15); x.fillStyle = '#f1f4ea'; x.fillText(s, cx2, gy + 23); };
+    tag(S.house ? 'Dave’s house' : HOUSING[S.housing].name, homeX);
+    tag(workName, workX);
+    x.textAlign = 'left';
+    const dt = doingText(st, t); if ($('doing').textContent !== dt) $('doing').textContent = dt;
+    const atWork = st.at === 'work';
+    const wb = $('workBtn');
+    if (wb.disabled === atWork) { wb.disabled = !atWork; }
+    const sub = atWork ? `Performance ${Math.round(S.perf)}/100. Keep clicking!` : S.job ? 'Available during work hours, Mon–Fri' : 'Get a job first';
+    if ($('workSub').textContent !== sub) $('workSub').textContent = sub;
+  }
+
+  // ================= HUD =================
+  function meter(id, v, txt) {
+    const m = $(id); m.querySelector('i').style.width = v + '%';
+    m.className = 'meter' + (v < 25 ? ' low' : v < 50 ? ' mid' : '');
+    $('t' + id.slice(1)).textContent = txt;
+  }
+  function hud() {
+    const d = today(), hr = Math.floor(frac * 24), ap = hr < 12 ? 'AM' : 'PM', h12 = hr % 12 || 12;
+    $('date').textContent = `${DOW[d.getUTCDay()]}, ${fmtDate(d)} · ${h12} ${ap}`;
+    $('age').textContent = `Age ${age()} · ${Math.max(0, Math.ceil((S.endMs - d.getTime()) / DAY / 365.25 * 10) / 10)} years left`;
+    $('hCash').textContent = money(S.cash);
+    $('hCard').textContent = S.card > 0 ? `Card debt ${money(S.card)}` : S.savings > 0 ? `+ ${money(S.savings)} saved` : '';
+    $('hCard').className = S.card > 0 ? 'down' : '';
+    const nw = netWorth(); $('hNw').textContent = money(nw); $('hNw').className = nw < 0 ? 'down' : '';
+    $('hNw2').textContent = S.job ? `${job().name} · ${money(annualWage())}/yr` : S.unemp ? 'Unemployed (benefits)' : 'No job';
+    meter('mHealth', S.health, S.sick > 0 ? 'Sick' : S.health < 25 ? 'Run down' : S.health < 50 ? 'Tired' : 'Healthy');
+    meter('mHappy', S.happy, S.burnout > 0 ? 'Burned out' : S.happy < 25 ? 'Miserable' : S.happy < 50 ? 'Meh' : S.happy < 75 ? 'Content' : 'Great');
+    meter('mPerf', S.job ? S.perf : 0, S.job ? (S.perf >= 80 ? 'Star employee' : S.perf >= 55 ? 'Solid' : S.perf >= 30 ? 'Slacking' : 'At risk of firing') : 'No job');
+    $('pausedTag').hidden = !(S.speed === 0 || modalOpen);
+  }
+  function refresh(force) { if (!S) return; hud(); renderPanel(force); }
+
+  // ================= Loop =================
+  let lastT = performance.now(), acc = 0;
+  const running = () => S && started && !S.over && S.speed > 0 && !modalOpen && !document.hidden;
+  function frame(t) {
+    const dt = Math.min(250, t - lastT); lastT = t;
+    if (running()) {
+      acc += dt;
+      const ms = DAY_MS / S.speed; let n = 0;
+      while (acc >= ms && n < 3 && running()) { acc -= ms; simDay(); n++; }
+      if (!running()) acc = 0;
+      if (acc > ms) acc = ms;
+      frac = clamp(acc / ms, 0, 0.999);
+      if (n) refresh();
+      else hud();
+    }
+    drawScene(t);
+    requestAnimationFrame(frame);
+  }
+
+  // ================= Save / start =================
+  function save() { if (!S) return; try { localStorage.setItem(SAVE, JSON.stringify(S)); } catch (e) {} }
+  function loadSave(raw) { try { const s = JSON.parse(raw); return s && s.v === 2 ? s : null; } catch (e) { return null; } }
+  function showStart() {
+    started = false; modalOpen = false; modalQueue = []; $('modal').hidden = true;
+    let saved = null; try { saved = loadSave(localStorage.getItem(SAVE)); } catch (e) {}
+    const eras = [
+      [2000, 'Dot-com bust, 9/11, a housing boom, then the 2008 crash right at the end.'],
+      [2008, 'The Great Recession hits in year one. Then one of the longest bull markets ever.'],
+      [2016, 'Brexit, a pandemic, stimulus checks, 9% inflation and the AI boom.'],
+    ];
+    $('eras').innerHTML = eras.map(([y, t]) => `<button class="era" data-era="${y}"><b>${y}–${y + 10}</b><span>${t}</span></button>`).join('');
+    $('continueRow').innerHTML = saved && !saved.over ? `<button class="btn primary" id="contBtn">Continue: Dave is ${Math.floor(saved.ageDays / 365.25)}, ${fmtDate(new Date(saved.startMs + saved.day * DAY))}</button>` : '';
+    $('scores').innerHTML = scoresHtml();
+    $('startScreen').hidden = false;
+    $('eras').querySelectorAll('.era').forEach(b => b.addEventListener('click', () => { audio(); newGame(+b.dataset.era); begin(); }));
+    if ($('contBtn')) $('contBtn').addEventListener('click', () => { audio(); S = saved; begin(); });
+  }
+  function begin() {
+    $('startScreen').hidden = true; started = true; acc = 0;
+    document.querySelectorAll('#speed button').forEach(b => b.setAttribute('aria-pressed', +b.dataset.s === S.speed ? 'true' : 'false'));
+    if (S.day === 0) tab = 'jobs';
+    renderFeed(); setTab(tab); refresh(true); save();
+  }
+
+  // ================= Wiring =================
+  $('speed').addEventListener('click', e => {
+    const s = e.target.dataset && e.target.dataset.s; if (s == null || !S) return;
+    S.speed = +s; document.querySelectorAll('#speed button').forEach(b => b.setAttribute('aria-pressed', b.dataset.s === s ? 'true' : 'false'));
+    hud();
+  });
+  $('mute').addEventListener('click', () => { muted = !muted; $('mute').textContent = 'Sound: ' + (muted ? 'off' : 'on'); try { localStorage.setItem('hustle-dave-mute', muted ? '1' : '0'); } catch (e) {} });
+  $('menuBtn').addEventListener('click', () => { if (S && !S.over) save(); showStart(); });
+  $('tabs').addEventListener('click', e => { const b = e.target.closest('.tab'); if (b) setTab(b.dataset.tab); });
+  $('panel').addEventListener('pointerdown', () => { pointerDown = true; });
+  window.addEventListener('pointerup', () => { setTimeout(() => { pointerDown = false; }, 0); });
+  $('panel').addEventListener('click', e => {
+    const b = e.target.closest('[data-act]'); if (!b || b.disabled || !S || S.over) return;
+    ACT[b.dataset.act](b.dataset.arg);
+    SFX.click(); checkGoals(); refresh(true);
+  });
+  function workHard() {
+    if ($('workBtn').disabled || !S) return;
+    S.perf = clamp(S.perf + 1.6 * (1.1 - S.perf / 110), 0, 100); S.happy -= 0.04;
+    SFX.click(); fx('+perf', 'work', 'gold'); hud();
+  }
+  $('workBtn').addEventListener('click', workHard);
+  document.addEventListener('keydown', e => {
+    if (e.code === 'Space' && started && !modalOpen && !['INPUT', 'BUTTON', 'TEXTAREA'].includes(document.activeElement.tagName)) { e.preventDefault(); workHard(); }
+  });
+  document.addEventListener('visibilitychange', () => { if (document.hidden) save(); });
+  window.addEventListener('pagehide', save);
+  window.addEventListener('resize', () => renderPanel(true));
+  try { muted = localStorage.getItem('hustle-dave-mute') === '1'; $('mute').textContent = 'Sound: ' + (muted ? 'off' : 'on'); } catch (e) {}
+  try { const t = localStorage.getItem('hustle-dave-tab'); if (t && PANELS[t]) tab = t; } catch (e) {}
+
+  function boot(data) {
+    if (data && data.save) { const s = loadSave(data.save); if (s) { S = s; begin(); requestAnimationFrame(frame); return; } }
+    showStart();
+    requestAnimationFrame(frame);
+  }
+  window.claude?.hot?.snapshot?.(() => ({ save: S && started ? JSON.stringify(S) : null }));
+  window.claude?.hot?.ready ? window.claude.hot.ready(boot) : boot(window.claude?.hot?.data ?? {});
+})();
+</script>
+</body>
+</html>
