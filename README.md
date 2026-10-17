@@ -7,9 +7,13 @@ NeonNinjaX2/NeonNinjaX2 is a ✨ special ✨ repository because its `README.md` 
 You can click the Preview link to take a look at your changes.
 --->
 
+## 🕹️ Play my games
+
+**https://neonninjax2.github.io/NeonNinjaX2/**
+
 ## 🎮 Hustle Dave
 
-A life-sim money game in [`hustle-dave/index.html`](hustle-dave/index.html). Download it and open it in any browser to play.
+A life-sim money game. [Play it here](https://neonninjax2.github.io/NeonNinjaX2/hustle-dave/).
 
 Dave is 18 with $1,500 and a room at his mom's. You get ten real years (start in 2000, 2008 or 2016) to make him rich.
 
